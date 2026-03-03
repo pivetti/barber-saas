@@ -2,107 +2,121 @@ const bcrypt = require("bcrypt")
 const { PrismaClient, Prisma } = require("@prisma/client")
 
 const prisma = new PrismaClient()
+const isProduction = process.env.NODE_ENV === "production"
+
+async function upsertServices() {
+  const servicesData = [
+    {
+      name: "Corte de Cabelo",
+      description: "Corte classico e moderno com acabamento profissional.",
+      price: new Prisma.Decimal(50.0),
+      imageUrl:
+        "https://utfs.io/f/0ddfbd26-a424-43a0-aaf3-c3f1dc6be6d1-1kgxo7.png",
+    },
+    {
+      name: "Barba",
+      description: "Modelagem completa para um visual alinhado.",
+      price: new Prisma.Decimal(35.0),
+      imageUrl:
+        "https://utfs.io/f/e6bdffb6-24a9-455b-aba3-903c2c2b5bde-1jo6tu.png",
+    },
+    {
+      name: "Pezinho",
+      description: "Acabamento lateral e nuca para manter o corte em dia.",
+      price: new Prisma.Decimal(35.0),
+      imageUrl:
+        "https://utfs.io/f/8a457cda-f768-411d-a737-cdb23ca6b9b5-b3pegf.png",
+    },
+    {
+      name: "Sobrancelha",
+      description: "Valoriza a expressao e simetria.",
+      price: new Prisma.Decimal(20.0),
+      imageUrl:
+        "https://utfs.io/f/2118f76e-89e4-43e6-87c9-8f157500c333-b0ps0b.png",
+    },
+    {
+      name: "Hidratacao",
+      description: "Tratamento rapido para fios mais saudaveis.",
+      price: new Prisma.Decimal(30.0),
+      imageUrl:
+        "https://utfs.io/f/8a457cda-f768-411d-a737-cdb23ca6b9b5-b3pegf.png",
+    },
+  ]
+
+  for (const service of servicesData) {
+    const existing = await prisma.service.findFirst({
+      where: { name: service.name },
+      select: { id: true },
+    })
+
+    if (existing) {
+      await prisma.service.update({
+        where: { id: existing.id },
+        data: service,
+      })
+    } else {
+      await prisma.service.create({
+        data: service,
+      })
+    }
+  }
+}
 
 async function seedDatabase() {
   try {
     console.log("Starting seed...")
 
-    // Reset only data, keeping table structure untouched
-    await prisma.booking.deleteMany({})
-    await prisma.service.deleteMany({})
-    await prisma.user.deleteMany({})
+    await upsertServices()
 
-    const defaultPasswordHash = await bcrypt.hash("123456", 12)
+    if (!isProduction) {
+      // Development only: deterministic demo data reset.
+      await prisma.booking.deleteMany({})
+      await prisma.user.deleteMany({})
 
-    const users = await prisma.$transaction([
-      prisma.user.create({
-        data: {
-          name: "Henrique Pivetti",
-          email: "henrique@email.com",
-          password: defaultPasswordHash,
-        },
-      }),
-      prisma.user.create({
-        data: {
-          name: "Joao Silva",
-          email: "joao@email.com",
-          password: defaultPasswordHash,
-        },
-      }),
-      prisma.user.create({
-        data: {
-          name: "Carlos Souza",
-          email: "carlos@email.com",
-          password: defaultPasswordHash,
-        },
-      }),
-    ])
+      const demoPassword = process.env.SEED_DEMO_PASSWORD || "dev-only-password"
+      const passwordHash = await bcrypt.hash(demoPassword, 12)
 
-    // No premium classification: all services are regular catalog items.
-    const services = await prisma.$transaction([
-      prisma.service.create({
-        data: {
-          name: "Corte de Cabelo",
-          description: "Corte classico e moderno com acabamento profissional.",
-          price: new Prisma.Decimal(50.0),
-          imageUrl:
-            "https://utfs.io/f/0ddfbd26-a424-43a0-aaf3-c3f1dc6be6d1-1kgxo7.png",
-        },
-      }),
-      prisma.service.create({
-        data: {
-          name: "Barba",
-          description: "Modelagem completa para um visual alinhado.",
-          price: new Prisma.Decimal(35.0),
-          imageUrl:
-            "https://utfs.io/f/e6bdffb6-24a9-455b-aba3-903c2c2b5bde-1jo6tu.png",
-        },
-      }),
-      prisma.service.create({
-        data: {
-          name: "Pezinho",
-          description: "Acabamento lateral e nuca para manter o corte em dia.",
-          price: new Prisma.Decimal(35.0),
-          imageUrl:
-            "https://utfs.io/f/8a457cda-f768-411d-a737-cdb23ca6b9b5-b3pegf.png",
-        },
-      }),
-      prisma.service.create({
-        data: {
-          name: "Sobrancelha",
-          description: "Valoriza a expressão e simetria.",
-          price: new Prisma.Decimal(5.0),
-          imageUrl:
-            "https://utfs.io/f/2118f76e-89e4-43e6-87c9-8f157500c333-b0ps0b.png",
-        },
-      }),
-      prisma.service.create({
-        data: {
-          name: "Hidratacao",
-          description: "Tratamento rapido para fios mais saudaveis.",
-          price: new Prisma.Decimal(30.0),
-          imageUrl:
-            "https://utfs.io/f/8a457cda-f768-411d-a737-cdb23ca6b9b5-b3pegf.png",
-        },
-      }),
-    ])
+      const users = await prisma.$transaction([
+        prisma.user.create({
+          data: {
+            name: "Henrique Pivetti",
+            email: "henrique@email.com",
+            password: passwordHash,
+          },
+        }),
+        prisma.user.create({
+          data: {
+            name: "Joao Silva",
+            email: "joao@email.com",
+            password: passwordHash,
+          },
+        }),
+      ])
 
-    await prisma.booking.createMany({
-      data: [
-        {
-          userId: users[0].id,
-          serviceId: services[0].id,
-          date: new Date(Date.now() + 24 * 60 * 60 * 1000),
-          status: "SCHEDULED",
-        },
-        {
-          userId: users[1].id,
-          serviceId: services[1].id,
-          date: new Date(Date.now() - 24 * 60 * 60 * 1000),
-          status: "DONE",
-        },
-      ],
-    })
+      const services = await prisma.service.findMany({
+        orderBy: { name: "asc" },
+        take: 2,
+      })
+
+      if (services.length >= 2) {
+        await prisma.booking.createMany({
+          data: [
+            {
+              userId: users[0].id,
+              serviceId: services[0].id,
+              date: new Date(Date.now() + 24 * 60 * 60 * 1000),
+              status: "SCHEDULED",
+            },
+            {
+              userId: users[1].id,
+              serviceId: services[1].id,
+              date: new Date(Date.now() - 24 * 60 * 60 * 1000),
+              status: "DONE",
+            },
+          ],
+        })
+      }
+    }
 
     console.log("Seed finished")
   } catch (error) {

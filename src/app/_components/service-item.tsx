@@ -1,7 +1,7 @@
 "use client"
 
 import { Booking, Service } from "@prisma/client"
-import { isPast, isToday, set, startOfDay } from "date-fns"
+import { getDay, isPast, isSameDay, isToday, set, startOfDay } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import Image from "next/image"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
@@ -32,9 +32,6 @@ const TIME_LIST = [
   "10:30",
   "11:00",
   "11:30",
-  "12:00",
-  "12:30",
-  "13:00",
   "13:30",
   "14:00",
   "14:30",
@@ -52,7 +49,63 @@ interface GetTimeListProps {
   selectedDay: Date
 }
 
+const getEasterDate = (year: number) => {
+  const a = year % 19
+  const b = Math.floor(year / 100)
+  const c = year % 100
+  const d = Math.floor(b / 4)
+  const e = b % 4
+  const f = Math.floor((b + 8) / 25)
+  const g = Math.floor((b - f + 1) / 3)
+  const h = (19 * a + b - d - g + 15) % 30
+  const i = Math.floor(c / 4)
+  const k = c % 4
+  const l = (32 + 2 * e + 2 * i - h - k) % 7
+  const m = Math.floor((a + 11 * h + 22 * l) / 451)
+  const month = Math.floor((h + l - 7 * m + 114) / 31)
+  const day = ((h + l - 7 * m + 114) % 31) + 1
+
+  return new Date(year, month - 1, day)
+}
+
+const addDays = (date: Date, days: number) => {
+  const nextDate = new Date(date)
+  nextDate.setDate(nextDate.getDate() + days)
+  return nextDate
+}
+
+const getBrazilNationalHolidays = (year: number) => {
+  const easter = getEasterDate(year)
+  return [
+    new Date(year, 0, 1), // Confraternizacao Universal
+    new Date(year, 3, 21), // Tiradentes
+    new Date(year, 4, 1), // Dia do Trabalhador
+    new Date(year, 8, 7), // Independencia do Brasil
+    new Date(year, 9, 12), // Nossa Senhora Aparecida
+    new Date(year, 10, 2), // Finados
+    new Date(year, 10, 15), // Proclamacao da Republica
+    new Date(year, 11, 25), // Natal
+    addDays(easter, -48), // Carnaval (segunda)
+    addDays(easter, -47), // Carnaval (terca)
+    addDays(easter, -2), // Sexta-feira Santa
+    addDays(easter, 60), // Corpus Christi
+  ]
+}
+
+const isSundayOrBrazilHoliday = (date: Date) => {
+  if (getDay(date) === 0) {
+    return true
+  }
+
+  const holidays = getBrazilNationalHolidays(date.getFullYear())
+  return holidays.some((holiday) => isSameDay(holiday, date))
+}
+
 const getTimeList = ({ bookings, selectedDay }: GetTimeListProps) => {
+  if (isSundayOrBrazilHoliday(selectedDay)) {
+    return []
+  }
+
   return TIME_LIST.filter((time) => {
     const hour = Number(time.split(":")[0])
     const minutes = Number(time.split(":")[1])
@@ -188,7 +241,9 @@ const ServiceItem = ({ service }: ServiceItemProps) => {
         return
       }
 
-      toast.error("Erro ao criar reserva")
+      const message =
+        error instanceof Error ? error.message : "Erro ao criar reserva"
+      toast.error(message)
     }
   }
 
@@ -254,7 +309,9 @@ const ServiceItem = ({ service }: ServiceItemProps) => {
               mode="single"
               selected={selectedDay}
               onSelect={setSelectedDay}
-              disabled={{ before: startOfDay(new Date()) }}
+              disabled={(date) =>
+                date < startOfDay(new Date()) || isSundayOrBrazilHoliday(date)
+              }
               locale={ptBR}
               className="mx-auto"
             />
