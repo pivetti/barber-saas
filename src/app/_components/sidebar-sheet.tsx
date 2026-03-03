@@ -152,42 +152,6 @@ const SidebarSheet = () => {
           </SheetClose>
         </section>
 
-        <section aria-label="Servicos" className="space-y-2 border-t border-zinc-800 pt-4">
-          <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
-            Servicos
-          </p>
-
-          <div className="space-y-2">
-            {quickSearchOptions.map((option) => {
-              const isActive = selectedService === option.title
-              return (
-                <SheetClose key={option.title} asChild>
-                  <Link
-                    href={`/?service=${encodeURIComponent(option.title)}`}
-                    aria-label={`Filtrar por ${option.title}`}
-                    className={cn(
-                      "flex h-11 items-center gap-3 rounded-2xl border px-3 text-sm transition-colors",
-                      isActive
-                        ? "border-violet-500/40 bg-violet-500/15 text-violet-100"
-                        : "border-transparent text-zinc-300 hover:border-zinc-800 hover:bg-zinc-900/80",
-                    )}
-                  >
-                    <span className="rounded-lg border border-zinc-700 bg-zinc-900 p-1">
-                      <Image
-                        alt={option.title}
-                        src={option.imageUrl}
-                        height={14}
-                        width={14}
-                      />
-                    </span>
-                    <span className="line-clamp-1 flex-1">{option.title}</span>
-                  </Link>
-                </SheetClose>
-              )
-            })}
-          </div>
-        </section>
-
         <section aria-label="Area de autenticacao" className="space-y-2 border-t border-zinc-800 pt-4">
           <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
             Conta
@@ -229,6 +193,42 @@ const SidebarSheet = () => {
               {logoutLoading ? "Saindo..." : "Logout"}
             </Button>
           )}
+        </section>
+
+        <section aria-label="Servicos" className="space-y-2 border-t border-zinc-800 pt-4">
+          <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+            Servicos
+          </p>
+
+          <div className="space-y-2">
+            {quickSearchOptions.map((option) => {
+              const isActive = selectedService === option.title
+              return (
+                <SheetClose key={option.title} asChild>
+                  <Link
+                    href={`/?service=${encodeURIComponent(option.title)}`}
+                    aria-label={`Filtrar por ${option.title}`}
+                    className={cn(
+                      "flex h-11 items-center gap-3 rounded-2xl border px-3 text-sm transition-colors",
+                      isActive
+                        ? "border-violet-500/40 bg-violet-500/15 text-violet-100"
+                        : "border-transparent text-zinc-300 hover:border-zinc-800 hover:bg-zinc-900/80",
+                    )}
+                  >
+                    <span className="rounded-lg border border-zinc-700 bg-zinc-900 p-1">
+                      <Image
+                        alt={option.title}
+                        src={option.imageUrl}
+                        height={14}
+                        width={14}
+                      />
+                    </span>
+                    <span className="line-clamp-1 flex-1">{option.title}</span>
+                  </Link>
+                </SheetClose>
+              )
+            })}
+          </div>
         </section>
       </div>
     </SheetContent>

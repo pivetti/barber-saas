@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import { Card, CardContent } from "./ui/card"
-import { Avatar, AvatarImage } from "./ui/avatar"
 import { Sheet, SheetClose, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet"
 import { DialogClose } from "@radix-ui/react-dialog"
 import { toast } from "sonner"
@@ -44,20 +43,19 @@ const BookingItem = ({ booking }: BookingItemProps) => {
 
   return (
     <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-      <SheetTrigger className="w-full min-w-[90%]">
-        <Card className="min-w-[90%]">
+      <SheetTrigger className="w-full md:w-auto">
+        <Card className="w-full md:w-[270px]">
           <CardContent className="flex justify-between p-0">
-            <div className="flex flex-col gap-2 py-5 pl-5">
+            <div className="flex flex-1 flex-col gap-2 p-5 pr-4">
               <Badge className="w-fit" variant={isConfirmed ? "default" : "secondary"}>
                 {isConfirmed ? "Confirmado" : "Finalizado"}
               </Badge>
-              <h3 className="font-semibold">{booking.service.name}</h3>
-              <div className="flex items-center gap-2">
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={booking.service.imageUrl} />
-                </Avatar>
-                <p className="text-sm">Serviço</p>
-              </div>
+              <h3 className="font-semibold text-left">
+                {booking.service.name}
+              </h3>
+              <p className="self-start text-left text-xs text-zinc-400">
+                {format(bookingDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+              </p>
             </div>
 
             <div className="flex flex-col items-center justify-center border-l-2 border-solid px-5">

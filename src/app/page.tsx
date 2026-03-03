@@ -101,12 +101,14 @@ const Home = async ({ searchParams }: HomeProps) => {
           <Search />
         </section>
 
-        <section className="relative mt-6 h-[150px] w-full md:h-[200px] lg:h-[250px]">
+        <section className="mt-6 w-full">
           <Image
             alt="Agende seu horario"
             src="/banner-02.png"
-            fill
-            className="rounded-xl object-cover"
+            width={1600}
+            height={520}
+            sizes="(max-width: 768px) 100vw, 1152px"
+            className="h-auto w-full rounded-xl"
           />
         </section>
 
