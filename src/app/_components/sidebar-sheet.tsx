@@ -6,14 +6,12 @@ import {
   HomeIcon,
   LogInIcon,
   LogOutIcon,
-  SparklesIcon,
+  ScissorsIcon,
   UserPlusIcon,
 } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { quickSearchOptions } from "../_constants/search"
+import { usePathname, useRouter } from "next/navigation"
+import { useCallback, useEffect, useState } from "react"
 import { cn } from "../_lib/utils"
 import { Button } from "./ui/button"
 import { SheetClose, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet"
@@ -21,16 +19,10 @@ import { SheetClose, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet"
 const SidebarSheet = () => {
   const router = useRouter()
   const pathname = usePathname()
-  const searchParams = useSearchParams()
 
   const [logoutLoading, setLogoutLoading] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [userName, setUserName] = useState<string | null>(null)
-
-  const selectedService = useMemo(
-    () => searchParams.get("service") ?? "",
-    [searchParams],
-  )
 
   const loadAuthState = useCallback(async () => {
     try {
@@ -97,25 +89,18 @@ const SidebarSheet = () => {
       className={cn("overflow-y-auto border-l border-zinc-800 bg-zinc-950 p-0 text-zinc-100")}
     >
       <SheetHeader className="space-y-0 border-b border-zinc-800 p-5 pr-14">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-violet-500/30 bg-violet-500/10">
-            <SparklesIcon className="h-5 w-5 text-violet-300" />
-          </div>
-          <div>
-            <SheetTitle className="text-left text-base font-semibold text-zinc-100">
-              {userName || "Faça seu login"}
-            </SheetTitle>
-            <p className="text-left text-xs text-zinc-400">
-              Navegação rápida
-            </p>
-          </div>
+        <div>
+          <SheetTitle className="text-left text-base font-semibold text-zinc-100">
+            {userName || "Faca seu login"}
+          </SheetTitle>
+          <p className="text-left text-xs text-zinc-400">Navegacao rapida</p>
         </div>
       </SheetHeader>
 
       <div className="space-y-6 p-5">
         <section aria-label="Navegacao principal" className="space-y-2">
           <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
-            Navegação
+            Navegacao
           </p>
 
           <SheetClose asChild>
@@ -130,8 +115,24 @@ const SidebarSheet = () => {
               )}
             >
               <HomeIcon className="h-4 w-4" />
-              <span className="flex-1">Início</span>
+              <span className="flex-1">Inicio</span>
               <ChevronRightIcon className="h-4 w-4 opacity-60 transition group-hover:translate-x-0.5" />
+            </Link>
+          </SheetClose>
+
+          <SheetClose asChild>
+            <Link
+              href="/services"
+              aria-label="Ir para servicos"
+              className={cn(
+                "group flex h-11 items-center gap-3 rounded-2xl border px-4 text-sm font-semibold transition-colors",
+                pathname.startsWith("/services")
+                  ? "border-violet-500/40 bg-violet-500/20 text-violet-100"
+                  : "border-zinc-800 bg-zinc-900/70 text-zinc-200 hover:border-zinc-700 hover:bg-zinc-900",
+              )}
+            >
+              <ScissorsIcon className="h-4 w-4" />
+              <span className="flex-1">Servicos</span>
             </Link>
           </SheetClose>
 
@@ -193,42 +194,6 @@ const SidebarSheet = () => {
               {logoutLoading ? "Saindo..." : "Logout"}
             </Button>
           )}
-        </section>
-
-        <section aria-label="Servicos" className="space-y-2 border-t border-zinc-800 pt-4">
-          <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
-            Servicos
-          </p>
-
-          <div className="space-y-2">
-            {quickSearchOptions.map((option) => {
-              const isActive = selectedService === option.title
-              return (
-                <SheetClose key={option.title} asChild>
-                  <Link
-                    href={`/?service=${encodeURIComponent(option.title)}`}
-                    aria-label={`Filtrar por ${option.title}`}
-                    className={cn(
-                      "flex h-11 items-center gap-3 rounded-2xl border px-3 text-sm transition-colors",
-                      isActive
-                        ? "border-violet-500/40 bg-violet-500/15 text-violet-100"
-                        : "border-transparent text-zinc-300 hover:border-zinc-800 hover:bg-zinc-900/80",
-                    )}
-                  >
-                    <span className="rounded-lg border border-zinc-700 bg-zinc-900 p-1">
-                      <Image
-                        alt={option.title}
-                        src={option.imageUrl}
-                        height={14}
-                        width={14}
-                      />
-                    </span>
-                    <span className="line-clamp-1 flex-1">{option.title}</span>
-                  </Link>
-                </SheetClose>
-              )
-            })}
-          </div>
         </section>
       </div>
     </SheetContent>
