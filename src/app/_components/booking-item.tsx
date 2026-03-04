@@ -18,6 +18,7 @@ import BookingSummary from "./booking-summary"
 type BookingWithService = Prisma.BookingGetPayload<{
   include: {
     service: true
+    barber: true
   }
 }>
 
@@ -82,7 +83,11 @@ const BookingItem = ({ booking }: BookingItemProps) => {
           </Badge>
 
           <div className="mb-3 mt-6">
-            <BookingSummary service={booking.service} selectedDate={bookingDate} />
+            <BookingSummary
+              service={booking.service}
+              selectedDate={bookingDate}
+              barberName={booking.barber?.name}
+            />
           </div>
         </div>
 

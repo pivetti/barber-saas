@@ -11,6 +11,7 @@ import { db } from "./_lib/prisma"
 type BookingWithService = Prisma.BookingGetPayload<{
   include: {
     service: true
+    barber: true
   }
 }>
 
@@ -30,6 +31,7 @@ const Home = async () => {
       },
       include: {
         service: true,
+        barber: true,
       },
       orderBy: {
         date: "asc",
@@ -72,10 +74,10 @@ const Home = async () => {
 
         <section className="mt-4">
           <Link
-            href="/services"
+            href="/barbers"
             className="inline-flex items-center rounded-xl border border-violet-500/40 bg-violet-500/10 px-4 py-2 text-sm font-semibold text-violet-100 transition-colors hover:bg-violet-500/20"
           >
-            Ver servicos
+            Agendar
           </Link>
         </section>
 

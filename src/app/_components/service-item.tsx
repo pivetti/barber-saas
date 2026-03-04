@@ -21,6 +21,10 @@ type ServiceItemModel = Pick<Service, "id" | "name" | "description" | "imageUrl"
 
 interface ServiceItemProps {
   service: ServiceItemModel
+  barber: {
+    id: string
+    name: string
+  }
 }
 
 const TIME_LIST = [
@@ -131,7 +135,7 @@ const getTimeList = ({ bookings, selectedDay }: GetTimeListProps) => {
   })
 }
 
-const ServiceItem = ({ service }: ServiceItemProps) => {
+const ServiceItem = ({ service, barber }: ServiceItemProps) => {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -151,13 +155,14 @@ const ServiceItem = ({ service }: ServiceItemProps) => {
       const bookings = await getBookings({
         date: selectedDay,
         serviceId: service.id,
+        barberId: barber.id,
       })
 
       setDayBookings(bookings)
     }
 
     fetchBookings()
-  }, [selectedDay, service.id])
+  }, [barber.id, selectedDay, service.id])
 
   const selectedDate = useMemo(() => {
     if (!selectedDay || !selectedTime) {
@@ -219,6 +224,7 @@ const ServiceItem = ({ service }: ServiceItemProps) => {
     try {
       await createBooking({
         serviceId: service.id,
+        barberId: barber.id,
         date: selectedDate,
       })
 
@@ -333,7 +339,11 @@ const ServiceItem = ({ service }: ServiceItemProps) => {
 
             {selectedDate && (
               <div className="mt-6">
-                <BookingSummary service={service} selectedDate={selectedDate} />
+                <BookingSummary
+                  service={service}
+                  selectedDate={selectedDate}
+                  barberName={barber.name}
+                />
               </div>
             )}
           </div>

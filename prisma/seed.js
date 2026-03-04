@@ -62,11 +62,50 @@ async function upsertServices() {
   }
 }
 
+async function upsertBarbers() {
+  const barbersData = [
+    {
+      name: "Jesi",
+      imageUrl:
+        "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&w=500&q=80",
+    },
+    {
+      name: "Rafael",
+      imageUrl:
+        "https://images.unsplash.com/photo-1517832606299-7ae9b720a186?auto=format&fit=crop&w=500&q=80",
+    },
+    {
+      name: "Lucas",
+      imageUrl:
+        "https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?auto=format&fit=crop&w=500&q=80",
+    },
+  ]
+
+  for (const barber of barbersData) {
+    const existing = await prisma.barber.findFirst({
+      where: { name: barber.name },
+      select: { id: true },
+    })
+
+    if (existing) {
+      await prisma.barber.update({
+        where: { id: existing.id },
+        data: barber,
+      })
+    } else {
+      await prisma.barber.create({
+        data: barber,
+      })
+    }
+  }
+}
+
 async function seedDatabase() {
   try {
     console.log("Starting seed...")
 
     await upsertServices()
+    await upsertBarbers()
 
     if (!isProduction) {
       // Development only: deterministic demo data reset.
@@ -97,19 +136,25 @@ async function seedDatabase() {
         orderBy: { name: "asc" },
         take: 2,
       })
+      const barbers = await prisma.barber.findMany({
+        orderBy: { name: "asc" },
+        take: 2,
+      })
 
-      if (services.length >= 2) {
+      if (services.length >= 2 && barbers.length >= 2) {
         await prisma.booking.createMany({
           data: [
             {
               userId: users[0].id,
               serviceId: services[0].id,
+              barberId: barbers[0].id,
               date: new Date(Date.now() + 24 * 60 * 60 * 1000),
               status: "SCHEDULED",
             },
             {
               userId: users[1].id,
               serviceId: services[1].id,
+              barberId: barbers[1].id,
               date: new Date(Date.now() - 24 * 60 * 60 * 1000),
               status: "DONE",
             },

@@ -10,9 +10,10 @@ type BookingSummaryService = Pick<Service, "name"> & {
 interface BookingSummaryProps {
   service: BookingSummaryService
   selectedDate: Date
+  barberName?: string | null
 }
 
-const BookingSummary = ({ service, selectedDate }: BookingSummaryProps) => {
+const BookingSummary = ({ service, selectedDate, barberName }: BookingSummaryProps) => {
   return (
     <Card>
       <CardContent className="space-y-3 p-3">
@@ -39,6 +40,13 @@ const BookingSummary = ({ service, selectedDate }: BookingSummaryProps) => {
           <h2 className="text-sm text-gray-400">Horario</h2>
           <p className="text-sm">{format(selectedDate, "HH:mm")}</p>
         </div>
+
+        {barberName && (
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm text-gray-400">Barbeiro</h2>
+            <p className="text-sm">{barberName}</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

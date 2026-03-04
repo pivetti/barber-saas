@@ -7,6 +7,7 @@ import { db } from "../_lib/prisma"
 
 interface CreateBookingParams {
   serviceId: string
+  barberId: string
   date: Date
 }
 
@@ -67,6 +68,10 @@ export const createBooking = async (params: CreateBookingParams) => {
   const user = await getUserFromToken()
   if (!user) {
     throw new Error("Usuario nao autenticado")
+  }
+
+  if (!params.barberId) {
+    throw new Error("Selecione um barbeiro")
   }
 
   if (isSundayOrBrazilHoliday(params.date)) {

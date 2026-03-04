@@ -122,17 +122,17 @@ const SidebarSheet = () => {
 
           <SheetClose asChild>
             <Link
-              href="/services"
-              aria-label="Ir para servicos"
+              href="/barbers"
+              aria-label="Ir para agendar"
               className={cn(
                 "group flex h-11 items-center gap-3 rounded-2xl border px-4 text-sm font-semibold transition-colors",
-                pathname.startsWith("/services")
+                pathname.startsWith("/barbers") || pathname.startsWith("/services")
                   ? "border-violet-500/40 bg-violet-500/20 text-violet-100"
                   : "border-zinc-800 bg-zinc-900/70 text-zinc-200 hover:border-zinc-700 hover:bg-zinc-900",
               )}
             >
               <ScissorsIcon className="h-4 w-4" />
-              <span className="flex-1">Servicos</span>
+              <span className="flex-1">Agendar</span>
             </Link>
           </SheetClose>
 
