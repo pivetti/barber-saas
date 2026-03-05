@@ -67,22 +67,30 @@ const ServicesPage = async ({ searchParams }: ServicesPageProps) => {
       <Header />
 
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-        <section className="space-y-1">
-          <h1 className="text-xl font-bold md:text-2xl">Servicos</h1>
-          <p className="text-sm text-zinc-400">
-            Barbeiro selecionado: <span className="font-semibold text-zinc-200">{selectedBarber.name}</span>
-          </p>
-        </section>
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="space-y-1">
+              <h1 className="text-xl font-bold md:text-2xl">Servicos</h1>
+              <p className="text-sm text-zinc-400">
+                Barbeiro selecionado:{" "}
+                <span className="font-semibold text-zinc-100">
+                  {selectedBarber.name}
+                </span>
+              </p>
+            </div>
 
-        <section className="mt-3">
-          <Link href="/barbers" className="text-sm text-violet-300 hover:text-violet-200">
-            Trocar barbeiro
-          </Link>
+            <Link
+              href="/barbers"
+              className="inline-flex h-9 items-center justify-center rounded-lg border border-violet-500/35 bg-violet-500/10 px-3 text-sm font-medium text-violet-100 transition-colors hover:bg-violet-500/20"
+            >
+              Trocar barbeiro
+            </Link>
+          </div>
         </section>
 
         <section className="mt-8 space-y-4">
           <div className="mx-auto w-full max-w-6xl">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {serializedServices.map((service) => (
                 <ServiceItem
                   key={service.id}

@@ -8,32 +8,35 @@ import Link from "next/link"
 
 const Header = () => {
   return (
-    <header className="border-b border-white/10 bg-black/40 backdrop-blur-md">
+    <header className="border-b border-zinc-800/80 bg-gradient-to-b from-black/70 to-zinc-950/70 backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-        <Link href="/" className="leading-none">
-          <span className="flex flex-col leading-tight">
-            <span className="text-xl font-bold tracking-tight text-white">
-              JESI
+        <Link href="/" className="group leading-none">
+          <span className="flex flex-col gap-1">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-500 transition-colors group-hover:text-zinc-400">
+              Barbearia do
             </span>
-            <span className="text-xs uppercase tracking-[0.22em] text-gray-400">
-              BARBER
+            <span className="text-lg font-extrabold tracking-tight text-zinc-100 sm:text-xl">
+              Jesi
             </span>
           </span>
         </Link>
 
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-10 w-10 rounded-lg bg-white/5 text-zinc-100 transition hover:bg-white/10"
-              aria-label="Abrir menu"
-            >
-              <MenuIcon className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SidebarSheet />
-        </Sheet>
+        <div className="flex items-center gap-2">
+
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-10 w-10 rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-100 transition-all hover:border-violet-500/40 hover:bg-zinc-800/90 hover:text-violet-100 focus-visible:ring-violet-500"
+                aria-label="Abrir menu"
+              >
+                <MenuIcon className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SidebarSheet />
+          </Sheet>
+        </div>
       </div>
     </header>
   )

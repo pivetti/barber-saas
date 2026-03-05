@@ -30,7 +30,7 @@ const Bookings = async () => {
             <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
               Confirmados
             </h2>
-            <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3 xl:grid-cols-4">
               {confirmedBookings.map((booking) => (
                 <BookingItem
                   key={booking.id}
@@ -46,7 +46,7 @@ const Bookings = async () => {
             <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
               Finalizados
             </h2>
-            <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3 xl:grid-cols-4">
               {concludedBookings.map((booking) => (
                 <BookingItem
                   key={booking.id}

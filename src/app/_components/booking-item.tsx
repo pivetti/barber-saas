@@ -13,6 +13,7 @@ import { Sheet, SheetClose, SheetContent, SheetFooter, SheetHeader, SheetTitle, 
 import { DialogClose } from "@radix-ui/react-dialog"
 import { toast } from "sonner"
 import { deleteBooking } from "../_actions/delete-booking"
+import { getServiceImageUrl } from "../_lib/get-service-image-url"
 import BookingSummary from "./booking-summary"
 
 type BookingWithService = Prisma.BookingGetPayload<{
@@ -30,6 +31,10 @@ const BookingItem = ({ booking }: BookingItemProps) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const bookingDate = new Date(booking.date)
   const isConfirmed = isFuture(bookingDate)
+  const serviceImageUrl = getServiceImageUrl(
+    booking.service.name,
+    booking.service.imageUrl,
+  )
 
   const handleCancelBooking = async () => {
     try {
@@ -44,25 +49,30 @@ const BookingItem = ({ booking }: BookingItemProps) => {
 
   return (
     <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-      <SheetTrigger className="w-full md:w-auto">
-        <Card className="w-full md:w-[270px]">
+      <SheetTrigger className="w-full">
+        <Card className="w-full">
           <CardContent className="flex justify-between p-0">
-            <div className="flex flex-1 flex-col gap-2 p-5 pr-4">
-              <Badge className="w-fit" variant={isConfirmed ? "default" : "secondary"}>
+            <div className="flex flex-1 flex-col gap-1.5 p-3 pr-2 sm:gap-2 sm:p-5 sm:pr-4">
+              <Badge className="w-fit text-[11px] sm:text-xs" variant={isConfirmed ? "default" : "secondary"}>
                 {isConfirmed ? "Confirmado" : "Finalizado"}
               </Badge>
-              <h3 className="font-semibold text-left">
+              <h3 className="text-left text-sm font-semibold sm:text-base">
                 {booking.service.name}
               </h3>
-              <p className="self-start text-left text-xs text-zinc-400">
+              {booking.barber?.name && (
+                <p className="self-start text-left text-[11px] leading-tight text-zinc-300 sm:text-xs">
+                  Barbeiro: {booking.barber.name}
+                </p>
+              )}
+              <p className="self-start text-left text-[11px] leading-tight text-zinc-400 sm:text-xs">
                 {format(bookingDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
               </p>
             </div>
 
-            <div className="flex flex-col items-center justify-center border-l-2 border-solid px-5">
-              <p className="text-sm capitalize">{format(bookingDate, "MMMM", { locale: ptBR })}</p>
-              <p className="text-2xl">{format(bookingDate, "dd", { locale: ptBR })}</p>
-              <p className="text-sm">{format(bookingDate, "HH:mm", { locale: ptBR })}</p>
+            <div className="flex min-w-[64px] flex-col items-center justify-center border-l border-zinc-800 px-2 py-3 sm:px-5">
+              <p className="text-xs capitalize sm:text-sm">{format(bookingDate, "MMMM", { locale: ptBR })}</p>
+              <p className="text-xl sm:text-2xl">{format(bookingDate, "dd", { locale: ptBR })}</p>
+              <p className="text-xs sm:text-sm">{format(bookingDate, "HH:mm", { locale: ptBR })}</p>
             </div>
           </CardContent>
         </Card>
@@ -74,7 +84,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
         </SheetHeader>
 
         <div className="relative mt-6 h-[180px] w-full overflow-hidden rounded-xl">
-          <Image alt={booking.service.name} src={booking.service.imageUrl} fill className="object-cover" />
+          <Image alt={booking.service.name} src={serviceImageUrl} fill className="object-cover" />
         </div>
 
         <div className="mt-6">

@@ -1,6 +1,6 @@
 "use server"
 
-import { getDay, isSameDay } from "date-fns"
+import { addWeeks, endOfDay, getDay, isSameDay, startOfDay } from "date-fns"
 import { revalidatePath } from "next/cache"
 import { getUserFromToken } from "../_lib/auth"
 import { db } from "../_lib/prisma"
@@ -74,8 +74,33 @@ export const createBooking = async (params: CreateBookingParams) => {
     throw new Error("Selecione um barbeiro")
   }
 
+  const todayStart = startOfDay(new Date())
+  const maxBookingDate = endOfDay(addWeeks(new Date(), 4))
+
+  if (params.date < todayStart) {
+    throw new Error("Nao e possivel agendar em datas passadas")
+  }
+
+  if (params.date > maxBookingDate) {
+    throw new Error("Voce so pode agendar ate 4 semanas a partir de hoje")
+  }
+
   if (isSundayOrBrazilHoliday(params.date)) {
     throw new Error("Nao e possivel agendar aos domingos e feriados nacionais")
+  }
+
+  const conflictingBooking = await db.booking.findFirst({
+    where: {
+      barberId: params.barberId,
+      date: params.date,
+      status: {
+        not: "CANCELED",
+      },
+    },
+  })
+
+  if (conflictingBooking) {
+    throw new Error("Este horario ja esta agendado. Escolha outro.")
   }
 
   await db.booking.create({
