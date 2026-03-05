@@ -89,16 +89,14 @@ const ServicesPage = async ({ searchParams }: ServicesPageProps) => {
         </section>
 
         <section className="mt-8 space-y-4">
-          <div className="mx-auto w-full max-w-6xl">
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {serializedServices.map((service) => (
-                <ServiceItem
-                  key={service.id}
-                  service={service}
-                  barber={{ id: selectedBarber.id, name: selectedBarber.name }}
-                />
-              ))}
-            </div>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {serializedServices.map((service) => (
+              <ServiceItem
+                key={service.id}
+                service={service}
+                barber={{ id: selectedBarber.id, name: selectedBarber.name }}
+              />
+            ))}
           </div>
 
           {serializedServices.length === 0 && (

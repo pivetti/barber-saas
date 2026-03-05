@@ -144,7 +144,7 @@ const SidebarSheet = () => {
                 "group flex h-11 items-center gap-3 rounded-2xl border px-4 text-sm font-semibold transition-colors",
                 pathname.startsWith("/bookings")
                   ? "border-violet-500/40 bg-violet-500/20 text-violet-100"
-                  : "border-violet-500/30 bg-violet-500/10 text-violet-100 hover:bg-violet-500/20",
+                  : "border-zinc-800 bg-zinc-900/70 text-zinc-200 hover:border-zinc-700 hover:bg-zinc-900",
               )}
             >
               <CalendarIcon className="h-4 w-4" />
@@ -186,7 +186,7 @@ const SidebarSheet = () => {
           {isAuthenticated && (
             <Button
               variant="outline"
-              className="h-11 w-full justify-start gap-3 rounded-2xl border-violet-500/40 bg-violet-500/10 px-4 text-sm font-medium text-zinc-100 transition-colors hover:bg-violet-500/20 hover:text-violet-100"
+              className="h-11 w-full justify-start gap-3 rounded-2xl border-zinc-800 bg-zinc-900/70 px-4 text-sm font-medium text-zinc-100 transition-colors hover:border-zinc-700 hover:bg-zinc-900"
               onClick={handleLogoutClick}
               disabled={logoutLoading}
               aria-label="Logout"

@@ -78,7 +78,7 @@ const Home = async () => {
           </div>
 
           <div className="space-y-4 p-4 sm:p-6">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex-1 space-y-2">
                 <h2 className="text-xl font-bold text-zinc-100 sm:text-2xl">
                   Barbearia do Jesi
@@ -91,7 +91,7 @@ const Home = async () => {
 
               <Link
                 href="/barbers"
-                className="inline-flex h-10 shrink-0 items-center rounded-xl border border-violet-500/40 bg-violet-500/10 px-5 text-sm font-semibold text-violet-100 transition-colors hover:bg-violet-500/20 sm:h-11 sm:px-6 sm:text-base"
+                className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-violet-500/40 bg-violet-500/10 px-5 text-sm font-semibold text-violet-100 transition-colors hover:bg-violet-500/20 sm:h-11 sm:w-auto sm:shrink-0 sm:px-6 sm:text-base"
               >
                 Agendar
               </Link>

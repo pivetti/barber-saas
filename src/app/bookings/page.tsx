@@ -18,15 +18,17 @@ const Bookings = async () => {
     <>
       <Header />
 
-      <div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-8 sm:px-6">
-        <h1 className="text-xl font-bold">Agendamentos</h1>
+      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5">
+          <h1 className="text-xl font-bold md:text-2xl">Agendamentos</h1>
+        </section>
 
         {confirmedBookings.length === 0 && concludedBookings.length === 0 && (
-          <p className="text-gray-400">Voce nao tem agendamentos.</p>
+          <p className="mt-6 text-gray-400">Voce nao tem agendamentos.</p>
         )}
 
         {confirmedBookings.length > 0 && (
-          <section>
+          <section className="mt-8">
             <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
               Confirmados
             </h2>
@@ -42,7 +44,7 @@ const Bookings = async () => {
         )}
 
         {concludedBookings.length > 0 && (
-          <section>
+          <section className="mt-8">
             <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
               Finalizados
             </h2>
@@ -56,7 +58,7 @@ const Bookings = async () => {
             </div>
           </section>
         )}
-      </div>
+      </main>
     </>
   )
 }
