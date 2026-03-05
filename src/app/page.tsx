@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { MapPinIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import BookingItem from "./_components/booking-item"
@@ -19,6 +20,11 @@ const Home = async () => {
   const user = await getUserFromToken()
 
   let confirmedBookings: BookingWithService[] = []
+  const barbers = await db.barber.findMany({
+    orderBy: {
+      name: "asc",
+    },
+  })
 
   if (user) {
     confirmedBookings = await db.booking.findMany({
@@ -61,24 +67,48 @@ const Home = async () => {
           </p>
         </section>
 
-        <section className="mt-6 w-full">
-          <Image
-            alt="Agende seu horario"
-            src="/banner-02.png"
-            width={1600}
-            height={520}
-            sizes="(max-width: 768px) 100vw, 1152px"
-            className="h-auto w-full rounded-xl md:h-[190px] md:object-cover"
-          />
-        </section>
+        <section className="mt-6 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/60">
+          <div className="relative h-52 w-full sm:h-64">
+            <Image
+              alt="Ambiente da barbearia"
+              src="/banner-02.png"
+              fill
+              className="object-cover"
+            />
+          </div>
 
-        <section className="mt-4">
-          <Link
-            href="/barbers"
-            className="inline-flex items-center rounded-xl border border-violet-500/40 bg-violet-500/10 px-4 py-2 text-sm font-semibold text-violet-100 transition-colors hover:bg-violet-500/20"
-          >
-            Agendar
-          </Link>
+          <div className="space-y-4 p-4 sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 space-y-2">
+                <h2 className="text-xl font-bold text-zinc-100 sm:text-2xl">
+                  Barbearia do Jesi
+                </h2>
+                <p className="flex items-start gap-2 text-sm text-zinc-300">
+                  <MapPinIcon className="mt-0.5 h-4 w-4 text-violet-300" />
+                  Rua Exemplo, 123 - Centro, Sao Paulo - SP
+                </p>
+              </div>
+
+              <Link
+                href="/barbers"
+                className="inline-flex h-10 shrink-0 items-center rounded-xl border border-violet-500/40 bg-violet-500/10 px-5 text-sm font-semibold text-violet-100 transition-colors hover:bg-violet-500/20 sm:h-11 sm:px-6 sm:text-base"
+              >
+                Agendar
+              </Link>
+            </div>
+
+            <div className="space-y-2 border-t border-zinc-800 pt-4">
+              <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">
+                Sobre nos
+              </h3>
+              <p className="text-sm leading-6 text-zinc-300">
+                Somos uma barbearia focada em atendimento proximo, tecnica e
+                consistencia. Nosso objetivo e entregar cortes, barba e
+                acabamento com qualidade para que voce saia daqui com visual
+                alinhado e confianca renovada.
+              </p>
+            </div>
+          </div>
         </section>
 
         {confirmedBookings.length > 0 && (
@@ -97,6 +127,39 @@ const Home = async () => {
             </div>
           </section>
         )}
+
+        <section className="mt-8">
+          <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">
+            Barbeiros
+          </h3>
+
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
+            {barbers.map((barber) => (
+              <article
+                key={barber.id}
+                className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/70"
+              >
+                <div className="relative h-36 w-full sm:h-44">
+                  <Image
+                    alt={barber.name}
+                    src={barber.imageUrl}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="p-3 sm:p-4">
+                  <p className="text-sm font-semibold text-zinc-100 sm:text-base">
+                    {barber.name}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {barbers.length === 0 && (
+            <p className="text-sm text-zinc-400">Nenhum barbeiro encontrado.</p>
+          )}
+        </section>
       </main>
     </div>
   )

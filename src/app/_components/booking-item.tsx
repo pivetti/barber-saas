@@ -31,6 +31,10 @@ const BookingItem = ({ booking }: BookingItemProps) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const bookingDate = new Date(booking.date)
   const isConfirmed = isFuture(bookingDate)
+  const displayServiceName =
+    booking.service.name.toLowerCase() === "corte de cabelo"
+      ? "Cabelo"
+      : booking.service.name
   const serviceImageUrl = getServiceImageUrl(
     booking.service.name,
     booking.service.imageUrl,
@@ -57,7 +61,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                 {isConfirmed ? "Confirmado" : "Finalizado"}
               </Badge>
               <h3 className="text-left text-sm font-semibold sm:text-base">
-                {booking.service.name}
+                {displayServiceName}
               </h3>
               {booking.barber?.name && (
                 <p className="self-start text-left text-[11px] leading-tight text-zinc-300 sm:text-xs">
@@ -84,7 +88,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
         </SheetHeader>
 
         <div className="relative mt-6 h-[180px] w-full overflow-hidden rounded-xl">
-          <Image alt={booking.service.name} src={serviceImageUrl} fill className="object-cover" />
+          <Image alt={displayServiceName} src={serviceImageUrl} fill className="object-cover" />
         </div>
 
         <div className="mt-6">
@@ -94,7 +98,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
 
           <div className="mb-3 mt-6">
             <BookingSummary
-              service={booking.service}
+              service={{ ...booking.service, name: displayServiceName }}
               selectedDate={bookingDate}
               barberName={booking.barber?.name}
             />

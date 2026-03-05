@@ -151,6 +151,7 @@ const SidebarSheet = () => {
               <span className="flex-1">Seus agendamentos</span>
             </Link>
           </SheetClose>
+
         </section>
 
         <section aria-label="Area de autenticacao" className="space-y-2 border-t border-zinc-800 pt-4">
