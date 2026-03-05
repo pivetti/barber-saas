@@ -147,7 +147,7 @@ const Home = async () => {
         )}
 
         <section className="mt-8">
-          <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">
+          <h3 className="mb-4 text-xs font-bold uppercase text-zinc-400">
             Barbeiros
           </h3>
           <p className="mb-4 text-sm text-zinc-300">Conheça nossos barbeiros:</p>

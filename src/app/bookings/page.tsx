@@ -1,11 +1,19 @@
 import { redirect } from "next/navigation"
+import BookingConfirmedAlert from "../_components/booking-confirmed-alert"
 import BookingItem from "../_components/booking-item"
 import Header from "../_components/header"
 import { getConfirmedBookings } from "../_data/get-confirmed-bookings"
 import { getConcludedBookings } from "../_data/get-concluded-bookings"
 import { getUserFromToken } from "../_lib/auth"
 
-const Bookings = async () => {
+interface BookingsPageProps {
+  searchParams?: {
+    status?: string
+  }
+}
+
+const Bookings = async ({ searchParams }: BookingsPageProps) => {
+  const showConfirmedMessage = searchParams?.status === "confirmed"
   const user = await getUserFromToken()
   if (!user) {
     redirect("/login")
@@ -22,6 +30,8 @@ const Bookings = async () => {
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5">
           <h1 className="text-xl font-bold md:text-2xl">Agendamentos</h1>
         </section>
+
+        {showConfirmedMessage && <BookingConfirmedAlert />}
 
         {confirmedBookings.length === 0 && concludedBookings.length === 0 && (
           <p className="mt-6 text-gray-400">Voce nao tem agendamentos.</p>

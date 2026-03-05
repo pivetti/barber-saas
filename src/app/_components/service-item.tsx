@@ -278,16 +278,10 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
         date: selectedDate,
       })
 
-      toast.success("Reserva criada com sucesso", {
-        action: {
-          label: "Ver agendamentos",
-          onClick: () => router.push("/bookings"),
-        },
-      })
-
       setBookingSheetIsOpen(false)
       setSelectedDay(undefined)
       setSelectedTime(undefined)
+      router.push("/bookings?status=confirmed")
     } catch (error) {
       console.error(error)
       const authenticated = await isAuthenticated()
