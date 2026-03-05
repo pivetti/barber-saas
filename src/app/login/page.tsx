@@ -16,7 +16,7 @@ const LoginPage = () => {
   const searchParams = useSearchParams()
   const nextPath = searchParams.get("next") || "/bookings"
 
-  const [email, setEmail] = useState("")
+  const [name, setName] = useState("")
   const [password, setPassword] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -32,7 +32,7 @@ const LoginPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ name, password }),
       })
 
       const data = (await response.json()) as ApiErrorResponse
@@ -66,10 +66,10 @@ const LoginPage = () => {
 
           <form className="space-y-3" onSubmit={handleSubmit}>
             <Input
-              type="email"
-              placeholder="seuemail@exemplo.com"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              type="text"
+              placeholder="Seu nome"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
               required
             />
 

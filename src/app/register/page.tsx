@@ -15,7 +15,7 @@ const RegisterPage = () => {
   const router = useRouter()
 
   const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
+  const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -51,8 +51,9 @@ const RegisterPage = () => {
         },
         body: JSON.stringify({
           name,
-          email,
+          phone,
           password,
+          confirmPassword,
         }),
       })
 
@@ -92,10 +93,10 @@ const RegisterPage = () => {
             />
 
             <Input
-              type="email"
-              placeholder="seuemail@exemplo.com"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              type="tel"
+              placeholder="Seu telefone"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
               required
             />
 

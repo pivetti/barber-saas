@@ -4,20 +4,22 @@ import { db } from "@/app/_lib/prisma"
 
 interface RegisterBody {
   name?: string
-  email?: string
+  phone?: string
   password?: string
+  confirmPassword?: string
 }
 
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as RegisterBody
     const name = body.name?.trim()
-    const email = body.email?.trim().toLowerCase()
+    const phone = body.phone?.trim()
     const password = body.password
+    const confirmPassword = body.confirmPassword
 
-    if (!name || !email || !password) {
+    if (!name || !phone || !password || !confirmPassword) {
       return NextResponse.json(
-        { error: "name, email and password are required" },
+        { error: "name, phone, password and confirmPassword are required" },
         { status: 400 },
       )
     }
@@ -29,14 +31,21 @@ export async function POST(request: Request) {
       )
     }
 
-    const existingUser = await db.user.findUnique({
-      where: { email },
+    if (password !== confirmPassword) {
+      return NextResponse.json(
+        { error: "password and confirmPassword must match" },
+        { status: 400 },
+      )
+    }
+
+    const existingByName = await db.user.findUnique({
+      where: { name },
       select: { id: true },
     })
 
-    if (existingUser) {
+    if (existingByName) {
       return NextResponse.json(
-        { error: "email is already in use" },
+        { error: "name is already in use" },
         { status: 400 },
       )
     }
@@ -46,7 +55,7 @@ export async function POST(request: Request) {
     await db.user.create({
       data: {
         name,
-        email,
+        phone,
         password: hashedPassword,
       },
       select: {

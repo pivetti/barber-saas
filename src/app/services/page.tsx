@@ -89,7 +89,7 @@ const ServicesPage = async ({ searchParams }: ServicesPageProps) => {
         </section>
 
         <section className="mt-8 space-y-4">
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
             {serializedServices.map((service) => (
               <ServiceItem
                 key={service.id}

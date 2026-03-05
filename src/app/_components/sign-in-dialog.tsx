@@ -9,7 +9,7 @@ import { Button } from "./ui/button"
 
 const SignInDialog = () => {
   const router = useRouter()
-  const [email, setEmail] = useState("")
+  const [name, setName] = useState("")
   const [password, setPassword] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -23,7 +23,7 @@ const SignInDialog = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ name, password }),
       })
 
       const data = (await response.json()) as { error?: string }
@@ -35,7 +35,7 @@ const SignInDialog = () => {
 
       toast.success("Login realizado com sucesso")
       window.dispatchEvent(new Event("auth-changed"))
-      setEmail("")
+      setName("")
       setPassword("")
       router.refresh()
     } catch (error) {
@@ -50,16 +50,16 @@ const SignInDialog = () => {
       <DialogHeader>
         <DialogTitle>Faça login na plataforma</DialogTitle>
         <DialogDescription>
-          Entre com seu e-mail e senha para continuar.
+          Entre com seu nome e senha para continuar.
         </DialogDescription>
       </DialogHeader>
 
       <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
         <Input
-          type="email"
-          placeholder="seuemail@exemplo.com"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          type="text"
+          placeholder="Seu nome"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
           required
         />
 

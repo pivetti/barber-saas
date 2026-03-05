@@ -119,14 +119,14 @@ async function seedDatabase() {
         prisma.user.create({
           data: {
             name: "Henrique Pivetti",
-            email: "henrique@email.com",
+            phone: "5511991111111",
             password: passwordHash,
           },
         }),
         prisma.user.create({
           data: {
             name: "Joao Silva",
-            email: "joao@email.com",
+            phone: "5511992222222",
             password: passwordHash,
           },
         }),

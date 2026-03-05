@@ -8,14 +8,14 @@ const AUTH_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7
 
 export interface AuthTokenPayload extends JwtPayload {
   sub: string
-  email: string
   name: string
+  phone: string
 }
 
 export interface AuthUser {
   id: string
-  email: string
   name: string
+  phone: string
 }
 
 const getJwtSecret = () => {
@@ -42,7 +42,7 @@ export const verifyAuthToken = (token: string): AuthTokenPayload | null => {
       return null
     }
 
-    if (!decoded.sub || !decoded.email || !decoded.name) {
+    if (!decoded.sub || !decoded.name || !decoded.phone) {
       return null
     }
 
@@ -69,8 +69,8 @@ export const getUserFromToken = async (): Promise<AuthUser | null> => {
     where: { id: payload.sub },
     select: {
       id: true,
-      email: true,
       name: true,
+      phone: true,
     },
   })
 

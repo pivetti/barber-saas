@@ -4,29 +4,29 @@ import { AUTH_COOKIE_NAME, authCookieOptions, signAuthToken } from "@/app/_lib/a
 import { db } from "@/app/_lib/prisma"
 
 interface LoginBody {
-  email?: string
+  name?: string
   password?: string
 }
 
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as LoginBody
-    const email = body.email?.trim().toLowerCase()
+    const name = body.name?.trim()
     const password = body.password
 
-    if (!email || !password) {
+    if (!name || !password) {
       return NextResponse.json(
-        { error: "email and password are required" },
+        { error: "name and password are required" },
         { status: 400 },
       )
     }
 
     const user = await db.user.findUnique({
-      where: { email },
+      where: { name },
       select: {
         id: true,
         name: true,
-        email: true,
+        phone: true,
         password: true,
       },
     })
@@ -43,8 +43,8 @@ export async function POST(request: Request) {
 
     const token = signAuthToken({
       sub: user.id,
-      email: user.email,
       name: user.name,
+      phone: user.phone,
     })
 
     const response = NextResponse.json(
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
         user: {
           id: user.id,
           name: user.name,
-          email: user.email,
+          phone: user.phone,
         },
       },
       { status: 200 },

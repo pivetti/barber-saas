@@ -33,6 +33,7 @@ const BARBER_CONTACTS: Record<string, { whatsapp: string; instagram: string }> =
 
 const Home = async () => {
   const user = await getUserFromToken()
+  const scheduleHref = user ? "/barbers" : "/login?next=%2Fbarbers"
 
   let confirmedBookings: BookingWithService[] = []
   const barbers = await db.barber.findMany({
@@ -107,7 +108,7 @@ const Home = async () => {
               </div>
 
               <Link
-                href="/barbers"
+                href={scheduleHref}
                 className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-violet-500/40 bg-violet-500/10 px-5 text-sm font-semibold text-violet-100 transition-colors hover:bg-violet-500/20 sm:h-11 sm:w-auto sm:shrink-0 sm:px-6 sm:text-base"
               >
                 Agendar
@@ -149,6 +150,7 @@ const Home = async () => {
           <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">
             Barbeiros
           </h3>
+          <p className="mb-4 text-sm text-zinc-300">Conheça nossos barbeiros:</p>
 
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
             {barbers.map((barber) => (
