@@ -14,7 +14,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { cn } from "../_lib/utils"
 import { Button } from "./ui/button"
-import { SheetClose, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet"
+import { SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "./ui/sheet"
 
 const SidebarSheet = () => {
   const router = useRouter()
@@ -93,6 +93,9 @@ const SidebarSheet = () => {
           <SheetTitle className="text-left text-base font-semibold text-zinc-100">
             {userName || "Faca seu login"}
           </SheetTitle>
+          <SheetDescription className="sr-only">
+            Menu de navegação com links principais e ações da conta.
+          </SheetDescription>
           <p className="text-left text-xs text-zinc-400">Navegacao rapida</p>
         </div>
       </SheetHeader>

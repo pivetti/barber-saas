@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { MapPinIcon } from "lucide-react"
+import { InstagramIcon, MapPinIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import BookingItem from "./_components/booking-item"
@@ -15,6 +15,21 @@ type BookingWithService = Prisma.BookingGetPayload<{
     barber: true
   }
 }>
+
+const BARBER_CONTACTS: Record<string, { whatsapp: string; instagram: string }> = {
+  Jesi: {
+    whatsapp: "https://wa.me/5500000000000",
+    instagram: "https://instagram.com/",
+  },
+  Rafael: {
+    whatsapp: "https://wa.me/5500000000000",
+    instagram: "https://instagram.com/",
+  },
+  Lucas: {
+    whatsapp: "https://wa.me/5500000000000",
+    instagram: "https://instagram.com/",
+  },
+}
 
 const Home = async () => {
   const user = await getUserFromToken()
@@ -71,8 +86,10 @@ const Home = async () => {
           <div className="relative h-52 w-full sm:h-64">
             <Image
               alt="Ambiente da barbearia"
-              src="/banner-02.png"
+              src="/banner-jesi.png"
               fill
+              priority
+              sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1280px) calc(100vw - 3rem), 1152px"
               className="object-cover"
             />
           </div>
@@ -144,13 +161,43 @@ const Home = async () => {
                     alt={barber.name}
                     src={barber.imageUrl}
                     fill
+                    sizes="(max-width: 768px) 50vw, 33vw"
                     className="object-cover"
                   />
                 </div>
                 <div className="p-3 sm:p-4">
-                  <p className="text-sm font-semibold text-zinc-100 sm:text-base">
-                    {barber.name}
-                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-zinc-100 sm:text-base">
+                      {barber.name}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={BARBER_CONTACTS[barber.name]?.whatsapp ?? "https://wa.me/5500000000000"}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`WhatsApp de ${barber.name}`}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/80 text-zinc-200 transition-colors hover:border-violet-500/40 hover:bg-violet-500/10 hover:text-violet-100"
+                      >
+                        <Image
+                          src="/Logo do WhatsApp em estilo minimalista.png"
+                          alt=""
+                          aria-hidden="true"
+                          width={18}
+                          height={18}
+                          className="h-[18px] w-[18px] object-contain"
+                        />
+                      </a>
+                      <a
+                        href={BARBER_CONTACTS[barber.name]?.instagram ?? "https://instagram.com/"}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`Instagram de ${barber.name}`}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/80 text-zinc-200 transition-colors hover:border-violet-500/40 hover:bg-violet-500/10 hover:text-violet-100"
+                      >
+                        <InstagramIcon className="h-4 w-4" />
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </article>
             ))}

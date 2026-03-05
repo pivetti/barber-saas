@@ -40,6 +40,7 @@ const BarbersPage = async () => {
                     alt={barber.name}
                     src={barber.imageUrl}
                     fill
+                    sizes="(max-width: 768px) 50vw, 33vw"
                     className="object-cover"
                   />
                 </div>

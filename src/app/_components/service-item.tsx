@@ -24,7 +24,7 @@ import BookingSummary from "./booking-summary"
 import { Button } from "./ui/button"
 import { Calendar } from "./ui/calendar"
 import { Card, CardContent } from "./ui/card"
-import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "./ui/sheet"
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "./ui/sheet"
 
 type ServiceItemModel = Pick<Service, "id" | "name" | "description" | "imageUrl"> & {
   price: Service["price"] | number | string
@@ -313,6 +313,7 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
                 alt={service.name}
                 src={serviceImageUrl}
                 fill
+                sizes="(max-width: 640px) 44px, 110px"
                 className="rounded-xl object-cover transition-transform duration-200 group-hover:scale-[1.02]"
               />
             </div>
@@ -358,6 +359,9 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
         <SheetContent className="w-[90%] overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Fazer reserva</SheetTitle>
+            <SheetDescription className="sr-only">
+              Escolha data e horário para confirmar sua reserva.
+            </SheetDescription>
           </SheetHeader>
 
           <div className="py-6">

@@ -5,20 +5,20 @@ import { MenuIcon } from "lucide-react"
 import { Sheet, SheetTrigger } from "./ui/sheet"
 import SidebarSheet from "./sidebar-sheet"
 import Link from "next/link"
+import Image from "next/image"
 
 const Header = () => {
   return (
     <header className="border-b border-zinc-800/80 bg-gradient-to-b from-black/70 to-zinc-950/70 backdrop-blur-xl">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-2 sm:px-6 sm:py-3">
         <Link href="/" className="group leading-none">
-          <span className="flex flex-col gap-1">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-500 transition-colors group-hover:text-zinc-400">
-              Barbearia do
-            </span>
-            <span className="text-lg font-extrabold tracking-tight text-zinc-100 sm:text-xl">
-              Jesi
-            </span>
-          </span>
+          <Image
+            src="/logo-jesi.png"
+            alt="Barbearia do Jesi"
+            width={170}
+            height={52}
+            className="h-12 w-auto object-contain"
+          />
         </Link>
 
         <div className="flex items-center gap-2">

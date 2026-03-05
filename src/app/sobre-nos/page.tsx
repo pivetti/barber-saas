@@ -19,8 +19,9 @@ const SobreNosPage = async () => {
           <div className="relative h-52 w-full sm:h-64">
             <Image
               alt="Ambiente da barbearia"
-              src="/banner-02.png"
+              src="/banner-jesi.png"
               fill
+              sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1280px) calc(100vw - 3rem), 1152px"
               className="object-cover"
             />
           </div>
@@ -66,6 +67,7 @@ const SobreNosPage = async () => {
                     alt={barber.name}
                     src={barber.imageUrl}
                     fill
+                    sizes="(max-width: 768px) 50vw, 33vw"
                     className="object-cover"
                   />
                 </div>

@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import { Card, CardContent } from "./ui/card"
-import { Sheet, SheetClose, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet"
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet"
 import { DialogClose } from "@radix-ui/react-dialog"
 import { toast } from "sonner"
 import { deleteBooking } from "../_actions/delete-booking"
@@ -85,10 +85,19 @@ const BookingItem = ({ booking }: BookingItemProps) => {
       <SheetContent className="w-[85%]">
         <SheetHeader>
           <SheetTitle className="text-left">Informações da reserva</SheetTitle>
+          <SheetDescription className="sr-only">
+            Detalhes do agendamento e ações disponíveis para a reserva.
+          </SheetDescription>
         </SheetHeader>
 
         <div className="relative mt-6 h-[180px] w-full overflow-hidden rounded-xl">
-          <Image alt={displayServiceName} src={serviceImageUrl} fill className="object-cover" />
+          <Image
+            alt={displayServiceName}
+            src={serviceImageUrl}
+            fill
+            sizes="85vw"
+            className="object-cover"
+          />
         </div>
 
         <div className="mt-6">
