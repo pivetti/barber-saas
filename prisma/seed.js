@@ -63,19 +63,31 @@ async function upsertServices() {
 }
 
 async function upsertBarbers() {
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD || "admin123"
+  const adminPasswordHash = await bcrypt.hash(adminPassword, 12)
+
   const barbersData = [
     {
       name: "Jesi",
+      email: "jesi@barber.local",
+      phone: "5511999000001",
+      password: adminPasswordHash,
       imageUrl:
         "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&w=500&q=80",
     },
     {
       name: "Rafael",
+      email: "rafael@barber.local",
+      phone: "5511999000002",
+      password: adminPasswordHash,
       imageUrl:
         "https://images.unsplash.com/photo-1517832606299-7ae9b720a186?auto=format&fit=crop&w=500&q=80",
     },
     {
       name: "Lucas",
+      email: "lucas@barber.local",
+      phone: "5511999000003",
+      password: adminPasswordHash,
       imageUrl:
         "https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?auto=format&fit=crop&w=500&q=80",
     },
@@ -109,6 +121,12 @@ async function seedDatabase() {
 
     if (!isProduction) {
       // Development only: deterministic demo data reset.
+      await prisma.blockedTime.deleteMany({})
+      await prisma.workingHour.deleteMany({})
+      await prisma.scheduleSettings.deleteMany({})
+      await prisma.barberBlockedSlot.deleteMany({})
+      await prisma.barberBlockedDay.deleteMany({})
+      await prisma.barberAvailability.deleteMany({})
       await prisma.booking.deleteMany({})
       await prisma.user.deleteMany({})
 
@@ -140,6 +158,31 @@ async function seedDatabase() {
         orderBy: { name: "asc" },
         take: 2,
       })
+
+      for (const barber of barbers) {
+        await prisma.scheduleSettings.create({
+          data: {
+            barberId: barber.id,
+            slotIntervalMinutes: 30,
+          },
+        })
+
+        await prisma.workingHour.createMany({
+          data: [
+            { barberId: barber.id, dayOfWeek: 1, startTime: "08:00", endTime: "12:00" },
+            { barberId: barber.id, dayOfWeek: 1, startTime: "13:00", endTime: "18:00" },
+            { barberId: barber.id, dayOfWeek: 2, startTime: "08:00", endTime: "12:00" },
+            { barberId: barber.id, dayOfWeek: 2, startTime: "13:00", endTime: "18:00" },
+            { barberId: barber.id, dayOfWeek: 3, startTime: "08:00", endTime: "12:00" },
+            { barberId: barber.id, dayOfWeek: 3, startTime: "13:00", endTime: "18:00" },
+            { barberId: barber.id, dayOfWeek: 4, startTime: "08:00", endTime: "12:00" },
+            { barberId: barber.id, dayOfWeek: 4, startTime: "13:00", endTime: "18:00" },
+            { barberId: barber.id, dayOfWeek: 5, startTime: "08:00", endTime: "12:00" },
+            { barberId: barber.id, dayOfWeek: 5, startTime: "13:00", endTime: "18:00" },
+            { barberId: barber.id, dayOfWeek: 6, startTime: "08:00", endTime: "13:00" },
+          ],
+        })
+      }
 
       if (services.length >= 2 && barbers.length >= 2) {
         await prisma.booking.createMany({

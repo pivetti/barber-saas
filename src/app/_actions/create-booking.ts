@@ -2,6 +2,8 @@
 
 import { addWeeks, endOfDay, getDay, isSameDay, startOfDay } from "date-fns"
 import { revalidatePath } from "next/cache"
+import { format } from "date-fns"
+import { getBarberAvailableTimesForDate } from "../_lib/barber-schedule"
 import { getUserFromToken } from "../_lib/auth"
 import { db } from "../_lib/prisma"
 
@@ -87,6 +89,16 @@ export const createBooking = async (params: CreateBookingParams) => {
 
   if (isSundayOrBrazilHoliday(params.date)) {
     throw new Error("Nao e possivel agendar aos domingos e feriados nacionais")
+  }
+
+  const availableTimes = await getBarberAvailableTimesForDate({
+    barberId: params.barberId,
+    date: params.date,
+  })
+
+  const selectedTime = format(params.date, "HH:mm")
+  if (!availableTimes.includes(selectedTime)) {
+    throw new Error("Este horario esta indisponivel. Escolha outro.")
   }
 
   const conflictingBooking = await db.booking.findFirst({

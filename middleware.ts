@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 const AUTH_COOKIE_NAME = "auth_token"
+const ADMIN_AUTH_COOKIE_NAME = "admin_auth_token"
 
 const encoder = new TextEncoder()
 
@@ -60,25 +61,52 @@ const verifyJwt = async (token: string, secret: string) => {
 }
 
 export async function middleware(request: NextRequest) {
-  const token = request.cookies.get(AUTH_COOKIE_NAME)?.value
+  const pathname = request.nextUrl.pathname
+  const isAdminArea = pathname.startsWith("/admin")
+  const isAdminLogin = pathname === "/admin/login"
+
+  const token = request.cookies.get(
+    isAdminArea ? ADMIN_AUTH_COOKIE_NAME : AUTH_COOKIE_NAME,
+  )?.value
   const jwtSecret = process.env.JWT_SECRET
 
-  if (!token || !jwtSecret) {
-    const loginUrl = new URL("/login", request.url)
-    loginUrl.searchParams.set("next", request.nextUrl.pathname)
+  if (!jwtSecret) {
+    const loginPath = isAdminArea ? "/admin/login" : "/login"
+    const loginUrl = new URL(loginPath, request.url)
+    loginUrl.searchParams.set("next", pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  if (!token) {
+    if (isAdminLogin) {
+      return NextResponse.next()
+    }
+
+    const loginPath = isAdminArea ? "/admin/login" : "/login"
+    const loginUrl = new URL(loginPath, request.url)
+    loginUrl.searchParams.set("next", pathname)
     return NextResponse.redirect(loginUrl)
   }
 
   const payload = await verifyJwt(token, jwtSecret)
   if (!payload?.sub) {
-    const loginUrl = new URL("/login", request.url)
-    loginUrl.searchParams.set("next", request.nextUrl.pathname)
+    if (isAdminLogin) {
+      return NextResponse.next()
+    }
+
+    const loginPath = isAdminArea ? "/admin/login" : "/login"
+    const loginUrl = new URL(loginPath, request.url)
+    loginUrl.searchParams.set("next", pathname)
     return NextResponse.redirect(loginUrl)
+  }
+
+  if (isAdminLogin) {
+    return NextResponse.redirect(new URL("/admin/dashboard", request.url))
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ["/bookings/:path*"],
+  matcher: ["/bookings/:path*", "/admin/:path*"],
 }

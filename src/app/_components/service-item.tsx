@@ -17,7 +17,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { createBooking } from "../_actions/create-booking"
-import { getBookings } from "../_actions/get-bookings"
+import { getBookingDayContext } from "../_actions/get-booking-day-context"
 import { getServiceImageUrl } from "../_lib/get-service-image-url"
 import { cn } from "../_lib/utils"
 import BookingSummary from "./booking-summary"
@@ -38,30 +38,10 @@ interface ServiceItemProps {
   }
 }
 
-const TIME_LIST = [
-  "08:00",
-  "08:30",
-  "09:00",
-  "09:30",
-  "10:00",
-  "10:30",
-  "11:00",
-  "11:30",
-  "13:30",
-  "14:00",
-  "14:30",
-  "15:00",
-  "15:30",
-  "16:00",
-  "16:30",
-  "17:00",
-  "17:30",
-  "18:00",
-]
-
 interface GetTimeListProps {
   bookings: Booking[]
   selectedDay: Date
+  availableTimes: string[]
 }
 
 interface TimeSlot {
@@ -122,12 +102,12 @@ const isSundayOrBrazilHoliday = (date: Date) => {
   return holidays.some((holiday) => isSameDay(holiday, date))
 }
 
-const getTimeList = ({ bookings, selectedDay }: GetTimeListProps): TimeSlot[] => {
+const getTimeList = ({ bookings, selectedDay, availableTimes }: GetTimeListProps): TimeSlot[] => {
   if (isSundayOrBrazilHoliday(selectedDay)) {
     return []
   }
 
-  return TIME_LIST.map((time) => {
+  return availableTimes.map((time) => {
     const hour = Number(time.split(":")[0])
     const minutes = Number(time.split(":")[1])
 
@@ -179,6 +159,7 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
   const [selectedDay, setSelectedDay] = useState<Date | undefined>()
   const [selectedTime, setSelectedTime] = useState<string | undefined>()
   const [dayBookings, setDayBookings] = useState<Booking[]>([])
+  const [availableTimes, setAvailableTimes] = useState<string[]>([])
   const serviceImageUrl = getServiceImageUrl(service.name, service.imageUrl)
   const maxBookingDate = endOfDay(addWeeks(new Date(), 4))
 
@@ -186,15 +167,17 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
     const fetchBookings = async () => {
       if (!selectedDay) {
         setDayBookings([])
+        setAvailableTimes([])
         return
       }
 
-      const bookings = await getBookings({
+      const context = await getBookingDayContext({
         date: selectedDay,
         barberId: barber.id,
       })
 
-      setDayBookings(bookings)
+      setDayBookings(context.bookings)
+      setAvailableTimes(context.availableTimes)
     }
 
     fetchBookings()
@@ -221,8 +204,9 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
     return getTimeList({
       bookings: dayBookings,
       selectedDay,
+      availableTimes,
     })
-  }, [dayBookings, selectedDay])
+  }, [availableTimes, dayBookings, selectedDay])
 
   useEffect(() => {
     if (!selectedTime) {

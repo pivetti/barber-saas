@@ -33,12 +33,21 @@ model Service {
 }
 
 model Barber {
-  id        String    @id @default(uuid())
-  name      String
-  imageUrl  String
-  bookings  Booking[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id              String              @id @default(uuid())
+  name            String
+  email           String?             @unique
+  phone           String?             @unique
+  password        String?
+  imageUrl        String
+  bookings        Booking[]
+  availabilities  BarberAvailability[]
+  blockedDays     BarberBlockedDay[]
+  blockedSlots    BarberBlockedSlot[]
+  workingHours    WorkingHour[]
+  blockedTimes    BlockedTime[]
+  scheduleSetting ScheduleSettings?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
 }
 
 model Booking {
@@ -53,4 +62,84 @@ model Booking {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   service   Service  @relation(fields: [serviceId], references: [id])
+}
+
+model BarberAvailability {
+  id        String   @id @default(uuid())
+  barberId  String
+  barber    Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  dayOfWeek Int
+  time      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([barberId, dayOfWeek, time])
+  @@index([barberId, dayOfWeek])
+}
+
+model BarberBlockedDay {
+  id        String   @id @default(uuid())
+  barberId  String
+  barber    Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  date      DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([barberId, date])
+  @@index([barberId, date])
+}
+
+model BarberBlockedSlot {
+  id        String   @id @default(uuid())
+  barberId  String
+  barber    Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  date      DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([barberId, date])
+  @@index([barberId, date])
+}
+
+model WorkingHour {
+  id        String   @id @default(uuid())
+  barberId  String   @map("barber_id")
+  barber    Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  dayOfWeek Int      @map("day_of_week")
+  startTime String   @map("start_time")
+  endTime   String   @map("end_time")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([barberId, dayOfWeek, startTime, endTime])
+  @@index([barberId, dayOfWeek])
+  @@map("working_hours")
+}
+
+model BlockedTime {
+  id        String   @id @default(uuid())
+  barberId  String   @map("barber_id")
+  barber    Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  date      DateTime
+  startTime String   @map("start_time")
+  endTime   String   @map("end_time")
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([barberId, date])
+  @@map("blocked_times")
+}
+
+model ScheduleSettings {
+  id                  String   @id @default(uuid())
+  barberId            String   @unique @map("barber_id")
+  barber              Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  slotIntervalMinutes Int      @default(30) @map("slot_interval_minutes")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@map("schedule_settings")
 }
