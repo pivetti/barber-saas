@@ -29,8 +29,8 @@ const decodePayload = (value: string) => {
 const uint8ArrayToBase64Url = (value: Uint8Array) => {
   let binary = ""
 
-  for (const byte of value) {
-    binary += String.fromCharCode(byte)
+  for (let index = 0; index < value.length; index += 1) {
+    binary += String.fromCharCode(value[index]!)
   }
 
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
