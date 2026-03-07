@@ -48,7 +48,7 @@ async function upsertServices() {
       name: "Hidratacao",
       description: "Tratamento rapido para fios mais saudaveis.",
       price: new Prisma.Decimal(30.0),
-      imageUrl: "/service/hidratacao.svg",
+      imageUrl: "/services/hidratacao.svg",
     },
   ]
 

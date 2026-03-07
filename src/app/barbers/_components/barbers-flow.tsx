@@ -61,7 +61,7 @@ const BarbersFlow = ({ barbers }: BarbersFlowProps) => {
               key={barber.id}
               className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/70"
             >
-              <div className="relative h-28 w-full sm:h-36">
+              <div className="relative h-28 w-full sm:h-36 lg:h-52">
                 <Image
                   alt={barber.name}
                   src={barber.imageUrl}
