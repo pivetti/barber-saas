@@ -40,9 +40,13 @@
   * {
     @apply border-border antialiased;
   }
+
   html {
     @apply h-full;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
   }
+
   body {
     @apply h-full bg-background text-foreground;
   }

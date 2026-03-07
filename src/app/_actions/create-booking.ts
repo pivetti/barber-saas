@@ -1,16 +1,18 @@
 "use server"
 
+import { randomBytes } from "crypto"
 import { addWeeks, endOfDay, getDay, isSameDay, startOfDay } from "date-fns"
 import { revalidatePath } from "next/cache"
 import { format } from "date-fns"
 import { getBarberAvailableTimesForDate } from "../_lib/barber-schedule"
-import { getUserFromToken } from "../_lib/auth"
 import { db } from "../_lib/prisma"
 
 interface CreateBookingParams {
   serviceId: string
   barberId: string
   date: Date
+  customerName: string
+  customerPhone: string
 }
 
 const getEasterDate = (year: number) => {
@@ -67,9 +69,15 @@ const isSundayOrBrazilHoliday = (date: Date) => {
 }
 
 export const createBooking = async (params: CreateBookingParams) => {
-  const user = await getUserFromToken()
-  if (!user) {
-    throw new Error("Usuario nao autenticado")
+  const customerName = params.customerName.trim()
+  const customerPhone = params.customerPhone.replace(/\D/g, "")
+
+  if (customerName.length < 2) {
+    throw new Error("Informe um nome valido")
+  }
+
+  if (customerPhone.length < 10) {
+    throw new Error("Informe um telefone valido com DDD")
   }
 
   if (!params.barberId) {
@@ -115,13 +123,25 @@ export const createBooking = async (params: CreateBookingParams) => {
     throw new Error("Este horario ja esta agendado. Escolha outro.")
   }
 
-  await db.booking.create({
+  const booking = await db.booking.create({
     data: {
-      ...params,
-      userId: user.id,
+      serviceId: params.serviceId,
+      barberId: params.barberId,
+      date: params.date,
+      customerName,
+      customerPhone,
+      cancellationToken: `ct_${randomBytes(16).toString("hex")}`,
+    },
+    select: {
+      id: true,
+      cancellationToken: true,
     },
   })
 
   revalidatePath("/")
   revalidatePath("/bookings")
+  revalidatePath("/admin/bookings")
+  revalidatePath("/admin/dashboard")
+
+  return booking
 }

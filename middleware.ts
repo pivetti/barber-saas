@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-const AUTH_COOKIE_NAME = "auth_token"
 const ADMIN_AUTH_COOKIE_NAME = "admin_auth_token"
 
 const encoder = new TextEncoder()
@@ -62,17 +61,13 @@ const verifyJwt = async (token: string, secret: string) => {
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
-  const isAdminArea = pathname.startsWith("/admin")
   const isAdminLogin = pathname === "/admin/login"
 
-  const token = request.cookies.get(
-    isAdminArea ? ADMIN_AUTH_COOKIE_NAME : AUTH_COOKIE_NAME,
-  )?.value
+  const token = request.cookies.get(ADMIN_AUTH_COOKIE_NAME)?.value
   const jwtSecret = process.env.JWT_SECRET
 
   if (!jwtSecret) {
-    const loginPath = isAdminArea ? "/admin/login" : "/login"
-    const loginUrl = new URL(loginPath, request.url)
+    const loginUrl = new URL("/admin/login", request.url)
     loginUrl.searchParams.set("next", pathname)
     return NextResponse.redirect(loginUrl)
   }
@@ -82,8 +77,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next()
     }
 
-    const loginPath = isAdminArea ? "/admin/login" : "/login"
-    const loginUrl = new URL(loginPath, request.url)
+    const loginUrl = new URL("/admin/login", request.url)
     loginUrl.searchParams.set("next", pathname)
     return NextResponse.redirect(loginUrl)
   }
@@ -94,8 +88,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next()
     }
 
-    const loginPath = isAdminArea ? "/admin/login" : "/login"
-    const loginUrl = new URL(loginPath, request.url)
+    const loginUrl = new URL("/admin/login", request.url)
     loginUrl.searchParams.set("next", pathname)
     return NextResponse.redirect(loginUrl)
   }
@@ -108,5 +101,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/bookings/:path*", "/admin/:path*"],
+  matcher: ["/admin/:path*"],
 }

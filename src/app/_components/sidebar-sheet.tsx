@@ -4,85 +4,16 @@ import {
   CalendarIcon,
   ChevronRightIcon,
   HomeIcon,
-  LogInIcon,
-  LogOutIcon,
+  ShieldCheckIcon,
   ScissorsIcon,
-  UserPlusIcon,
 } from "lucide-react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { useCallback, useEffect, useState } from "react"
+import { usePathname } from "next/navigation"
 import { cn } from "../_lib/utils"
-import { Button } from "./ui/button"
 import { SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "./ui/sheet"
 
 const SidebarSheet = () => {
-  const router = useRouter()
   const pathname = usePathname()
-
-  const [logoutLoading, setLogoutLoading] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [userName, setUserName] = useState<string | null>(null)
-
-  const loadAuthState = useCallback(async () => {
-    try {
-      const response = await fetch("/api/me", {
-        method: "GET",
-        cache: "no-store",
-      })
-
-      if (!response.ok) {
-        setIsAuthenticated(false)
-        setUserName(null)
-        return
-      }
-
-      const data = (await response.json()) as {
-        authenticated?: boolean
-        user?: { name?: string | null } | null
-      }
-      const authenticated = Boolean(data.authenticated)
-      setIsAuthenticated(authenticated)
-      setUserName(authenticated ? (data.user?.name ?? null) : null)
-    } catch {
-      setIsAuthenticated(false)
-      setUserName(null)
-    }
-  }, [])
-
-  useEffect(() => {
-    loadAuthState()
-  }, [pathname, loadAuthState])
-
-  useEffect(() => {
-    const handleAuthChanged = () => {
-      loadAuthState()
-    }
-
-    window.addEventListener("focus", handleAuthChanged)
-    window.addEventListener("auth-changed", handleAuthChanged)
-
-    return () => {
-      window.removeEventListener("focus", handleAuthChanged)
-      window.removeEventListener("auth-changed", handleAuthChanged)
-    }
-  }, [loadAuthState])
-
-  const handleLogoutClick = async () => {
-    setLogoutLoading(true)
-    try {
-      await fetch("/api/logout", {
-        method: "POST",
-      })
-      setIsAuthenticated(false)
-      setUserName(null)
-      window.dispatchEvent(new Event("auth-changed"))
-      router.push("/")
-      router.refresh()
-    } finally {
-      setLogoutLoading(false)
-    }
-  }
 
   return (
     <SheetContent
@@ -91,10 +22,10 @@ const SidebarSheet = () => {
       <SheetHeader className="space-y-0 border-b border-zinc-800 p-5 pr-14">
         <div>
           <SheetTitle className="text-left text-base font-semibold text-zinc-100">
-            {userName || "Faca seu login"}
+            Barbearia do Jesi
           </SheetTitle>
           <SheetDescription className="sr-only">
-            Menu de navegação com links principais e ações da conta.
+            Menu de navegacao com links principais.
           </SheetDescription>
           <p className="text-left text-xs text-zinc-400">Navegacao rapida</p>
         </div>
@@ -125,11 +56,11 @@ const SidebarSheet = () => {
 
           <SheetClose asChild>
             <Link
-              href="/barbers"
+              href="/agendar"
               aria-label="Ir para agendar"
               className={cn(
                 "group flex h-11 items-center gap-3 rounded-2xl border px-4 text-sm font-semibold transition-colors",
-                pathname.startsWith("/barbers") || pathname.startsWith("/services")
+                pathname.startsWith("/agendar") || pathname.startsWith("/barbers") || pathname.startsWith("/services")
                   ? "border-violet-500/40 bg-violet-500/20 text-violet-100"
                   : "border-zinc-800 bg-zinc-900/70 text-zinc-200 hover:border-zinc-700 hover:bg-zinc-900",
               )}
@@ -142,7 +73,7 @@ const SidebarSheet = () => {
           <SheetClose asChild>
             <Link
               href="/bookings"
-              aria-label="Ir para agendamentos"
+              aria-label="Ir para gerenciar agendamentos"
               className={cn(
                 "group flex h-11 items-center gap-3 rounded-2xl border px-4 text-sm font-semibold transition-colors",
                 pathname.startsWith("/bookings")
@@ -151,53 +82,25 @@ const SidebarSheet = () => {
               )}
             >
               <CalendarIcon className="h-4 w-4" />
-              <span className="flex-1">Seus agendamentos</span>
+              <span className="flex-1">Gerenciar agendamento</span>
             </Link>
           </SheetClose>
-
         </section>
 
-        <section aria-label="Area de autenticacao" className="space-y-2 border-t border-zinc-800 pt-4">
+        <section aria-label="Area administrativa" className="space-y-2 border-t border-zinc-800 pt-4">
           <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
-            Conta
+            Admin
           </p>
 
-          {!isAuthenticated && (
-            <div className="space-y-2">
-              <SheetClose asChild>
-                <Link
-                  href="/login"
-                  className="flex h-11 items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/70 px-4 text-sm font-medium text-zinc-100 transition-colors hover:border-zinc-700 hover:bg-zinc-900"
-                >
-                  <LogInIcon className="h-4 w-4" />
-                  Entrar
-                </Link>
-              </SheetClose>
-
-              <SheetClose asChild>
-                <Link
-                  href="/register"
-                  className="flex h-11 items-center gap-3 rounded-2xl border border-violet-500/40 bg-violet-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-violet-400"
-                >
-                  <UserPlusIcon className="h-4 w-4" />
-                  Criar conta
-                </Link>
-              </SheetClose>
-            </div>
-          )}
-
-          {isAuthenticated && (
-            <Button
-              variant="outline"
-              className="h-11 w-full justify-start gap-3 rounded-2xl border-zinc-800 bg-zinc-900/70 px-4 text-sm font-medium text-zinc-100 transition-colors hover:border-zinc-700 hover:bg-zinc-900"
-              onClick={handleLogoutClick}
-              disabled={logoutLoading}
-              aria-label="Logout"
+          <SheetClose asChild>
+            <Link
+              href="/admin/login"
+              className="flex h-11 items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/70 px-4 text-sm font-medium text-zinc-100 transition-colors hover:border-zinc-700 hover:bg-zinc-900"
             >
-              <LogOutIcon className="h-4 w-4" />
-              {logoutLoading ? "Saindo..." : "Logout"}
-            </Button>
-          )}
+              <ShieldCheckIcon className="h-4 w-4" />
+              Entrar no painel
+            </Link>
+          </SheetClose>
         </section>
       </div>
     </SheetContent>

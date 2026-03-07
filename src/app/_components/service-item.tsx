@@ -18,6 +18,10 @@ import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { createBooking } from "../_actions/create-booking"
 import { getBookingDayContext } from "../_actions/get-booking-day-context"
+import {
+  CUSTOMER_PROFILE_STORAGE_KEY,
+  parseCustomerProfile,
+} from "../_lib/customer-profile"
 import { getServiceImageUrl } from "../_lib/get-service-image-url"
 import { cn } from "../_lib/utils"
 import BookingSummary from "./booking-summary"
@@ -78,18 +82,18 @@ const addDays = (date: Date, days: number) => {
 const getBrazilNationalHolidays = (year: number) => {
   const easter = getEasterDate(year)
   return [
-    new Date(year, 0, 1), // Confraternizacao Universal
-    new Date(year, 3, 21), // Tiradentes
-    new Date(year, 4, 1), // Dia do Trabalhador
-    new Date(year, 8, 7), // Independencia do Brasil
-    new Date(year, 9, 12), // Nossa Senhora Aparecida
-    new Date(year, 10, 2), // Finados
-    new Date(year, 10, 15), // Proclamacao da Republica
-    new Date(year, 11, 25), // Natal
-    addDays(easter, -48), // Carnaval (segunda)
-    addDays(easter, -47), // Carnaval (terca)
-    addDays(easter, -2), // Sexta-feira Santa
-    addDays(easter, 60), // Corpus Christi
+    new Date(year, 0, 1),
+    new Date(year, 3, 21),
+    new Date(year, 4, 1),
+    new Date(year, 8, 7),
+    new Date(year, 9, 12),
+    new Date(year, 10, 2),
+    new Date(year, 10, 15),
+    new Date(year, 11, 25),
+    addDays(easter, -48),
+    addDays(easter, -47),
+    addDays(easter, -2),
+    addDays(easter, 60),
   ]
 }
 
@@ -129,10 +133,7 @@ const getTimeList = ({ bookings, selectedDay, availableTimes }: GetTimeListProps
 
     const hasBookingOnCurrentTime = bookings.some((booking) => {
       const bookingDate = new Date(booking.date)
-      return (
-        bookingDate.getHours() === hour &&
-        bookingDate.getMinutes() === minutes
-      )
+      return bookingDate.getHours() === hour && bookingDate.getMinutes() === minutes
     })
 
     if (hasBookingOnCurrentTime) {
@@ -222,27 +223,19 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
     }
   }, [selectedTime, timeList])
 
-  const getLoginRedirectPath = () => {
+  const getCurrentPathWithQuery = () => {
     const query = searchParams.toString()
     return query ? `${pathname}?${query}` : pathname
   }
 
-  const isAuthenticated = async () => {
-    try {
-      const response = await fetch("/api/me", { cache: "no-store" })
-      if (!response.ok) return false
-      const data = (await response.json()) as { authenticated?: boolean }
-      return Boolean(data.authenticated)
-    } catch {
-      return false
-    }
-  }
+  const getSavedCustomerProfile = () =>
+    parseCustomerProfile(window.localStorage.getItem(CUSTOMER_PROFILE_STORAGE_KEY))
 
-  const handleBookingClick = async () => {
-    const authenticated = await isAuthenticated()
-    if (!authenticated) {
-      const next = encodeURIComponent(getLoginRedirectPath())
-      router.push(`/login?next=${next}`)
+  const handleBookingClick = () => {
+    const savedProfile = getSavedCustomerProfile()
+    if (!savedProfile) {
+      const nextPath = encodeURIComponent(getCurrentPathWithQuery())
+      router.push(`/agendar?next=${nextPath}`)
       return
     }
 
@@ -250,30 +243,33 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
   }
 
   const handleCreateBooking = async () => {
+    const savedProfile = getSavedCustomerProfile()
+    if (!savedProfile) {
+      const nextPath = encodeURIComponent(getCurrentPathWithQuery())
+      router.push(`/agendar?next=${nextPath}`)
+      return
+    }
+
     if (!selectedDate) {
       toast.error("Selecione data e horario")
       return
     }
 
     try {
-      await createBooking({
+      const booking = await createBooking({
         serviceId: service.id,
         barberId: barber.id,
         date: selectedDate,
+        customerName: savedProfile.name,
+        customerPhone: savedProfile.phone,
       })
 
       setBookingSheetIsOpen(false)
       setSelectedDay(undefined)
       setSelectedTime(undefined)
-      router.push("/bookings?status=confirmed")
+      router.push(`/bookings/confirmed?token=${encodeURIComponent(booking.cancellationToken)}`)
     } catch (error) {
       console.error(error)
-      const authenticated = await isAuthenticated()
-      if (!authenticated) {
-        const next = encodeURIComponent(getLoginRedirectPath())
-        router.push(`/login?next=${next}`)
-        return
-      }
 
       const message =
         error instanceof Error ? error.message : "Erro ao criar reserva"
@@ -338,7 +334,7 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
           <SheetHeader>
             <SheetTitle>Fazer reserva</SheetTitle>
             <SheetDescription className="sr-only">
-              Escolha data e horário para confirmar sua reserva.
+              Escolha data e horario para confirmar sua reserva.
             </SheetDescription>
           </SheetHeader>
 
@@ -353,7 +349,7 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
                 isSundayOrBrazilHoliday(date)
               }
               locale={ptBR}
-              className="mx-auto"
+              className="mx-auto mt-5"
             />
 
             {selectedDay && (
@@ -413,4 +409,3 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
 }
 
 export default ServiceItem
-

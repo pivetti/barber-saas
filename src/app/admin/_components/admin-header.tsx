@@ -12,9 +12,8 @@ interface AdminHeaderProps {
 
 const links = [
   { href: "/admin/dashboard", label: "Dashboard" },
-  { href: "/admin/bookings", label: "Agendamentos" },
   { href: "/admin/schedule", label: "Agenda" },
-  { href: "/admin/services", label: "Servicos" },
+  { href: "/admin/services", label: "Serviços" },
 ]
 
 const AdminHeader = ({ adminName }: AdminHeaderProps) => {

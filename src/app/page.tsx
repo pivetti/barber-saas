@@ -1,20 +1,10 @@
-import { Prisma } from "@prisma/client"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { InstagramIcon, MapPinIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import BookingItem from "./_components/booking-item"
 import Header from "./_components/header"
-import { getUserFromToken } from "./_lib/auth"
 import { db } from "./_lib/prisma"
-
-type BookingWithService = Prisma.BookingGetPayload<{
-  include: {
-    service: true
-    barber: true
-  }
-}>
 
 const BARBER_CONTACTS: Record<string, { whatsapp: string; instagram: string }> = {
   Jesi: {
@@ -32,35 +22,11 @@ const BARBER_CONTACTS: Record<string, { whatsapp: string; instagram: string }> =
 }
 
 const Home = async () => {
-  const user = await getUserFromToken()
-  const scheduleHref = user ? "/barbers" : "/login?next=%2Fbarbers"
-
-  let confirmedBookings: BookingWithService[] = []
   const barbers = await db.barber.findMany({
     orderBy: {
       name: "asc",
     },
   })
-
-  if (user) {
-    confirmedBookings = await db.booking.findMany({
-      where: {
-        userId: user.id,
-        status: "SCHEDULED",
-        date: {
-          gte: new Date(),
-        },
-      },
-      include: {
-        service: true,
-        barber: true,
-      },
-      orderBy: {
-        date: "asc",
-      },
-      take: 5,
-    })
-  }
 
   return (
     <div>
@@ -69,7 +35,7 @@ const Home = async () => {
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
         <section className="space-y-1">
           <h2 className="text-xl font-bold md:text-2xl">
-            Ola, {user?.name ?? "seja bem-vindo"}!
+            Ola, seja bem-vindo!
           </h2>
 
           <p className="text-sm text-zinc-400">
@@ -108,7 +74,7 @@ const Home = async () => {
               </div>
 
               <Link
-                href={scheduleHref}
+                href="/agendar"
                 className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-violet-500/40 bg-violet-500/10 px-5 text-sm font-semibold text-violet-100 transition-colors hover:bg-violet-500/20 sm:h-11 sm:w-auto sm:shrink-0 sm:px-6 sm:text-base"
               >
                 Agendar
@@ -128,23 +94,6 @@ const Home = async () => {
             </div>
           </div>
         </section>
-
-        {confirmedBookings.length > 0 && (
-          <section className="mt-8">
-            <h3 className="mb-4 text-xs font-bold uppercase text-zinc-400">
-              Seus agendamentos
-            </h3>
-
-            <div className="flex gap-4 overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-3 md:overflow-visible">
-              {confirmedBookings.map((booking) => (
-                <BookingItem
-                  key={booking.id}
-                  booking={JSON.parse(JSON.stringify(booking))}
-                />
-              ))}
-            </div>
-          </section>
-        )}
 
         <section className="mt-8">
           <h3 className="mb-4 text-xs font-bold uppercase text-zinc-400">
