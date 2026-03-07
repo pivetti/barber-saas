@@ -38,7 +38,7 @@ const LoginPage = () => {
       const data = (await response.json()) as ApiErrorResponse
 
       if (!response.ok) {
-        setErrorMessage(data.error ?? "Nao foi possivel fazer login.")
+        setErrorMessage(data.error ?? "Não foi possível fazer login.")
         return
       }
 
@@ -91,7 +91,7 @@ const LoginPage = () => {
           </form>
 
           <p className="text-center text-sm text-gray-400">
-            Nao tem conta?{" "}
+            Não tem conta?{" "}
             <Link href="/register" className="font-semibold text-primary underline">
               Cadastre-se
             </Link>

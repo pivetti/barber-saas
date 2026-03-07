@@ -8,26 +8,26 @@ import {
 import { db } from "@/app/_lib/prisma"
 
 interface AdminLoginBody {
-  identifier?: string
+  email?: string
   password?: string
 }
 
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as AdminLoginBody
-    const identifier = body.identifier?.trim().toLowerCase()
+    const email = body.email?.trim().toLowerCase()
     const password = body.password
 
-    if (!identifier || !password) {
+    if (!email || !password) {
       return NextResponse.json(
-        { error: "email/phone and password are required" },
+        { error: "email and password are required" },
         { status: 400 },
       )
     }
 
-    const barber = await db.barber.findFirst({
+    const barber = await db.barber.findUnique({
       where: {
-        OR: [{ email: identifier }, { phone: identifier }],
+        email,
       },
       select: {
         id: true,
@@ -35,10 +35,12 @@ export async function POST(request: Request) {
         email: true,
         phone: true,
         password: true,
+        role: true,
+        isActive: true,
       },
     })
 
-    if (!barber?.password) {
+    if (!barber?.password || !barber.isActive) {
       return NextResponse.json({ error: "invalid credentials" }, { status: 401 })
     }
 
@@ -52,6 +54,7 @@ export async function POST(request: Request) {
       name: barber.name,
       phone: barber.phone,
       email: barber.email,
+      role: barber.role,
     })
 
     const response = NextResponse.json(
@@ -62,6 +65,7 @@ export async function POST(request: Request) {
           name: barber.name,
           phone: barber.phone,
           email: barber.email,
+          role: barber.role,
         },
       },
       { status: 200 },

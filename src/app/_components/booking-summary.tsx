@@ -37,7 +37,7 @@ const BookingSummary = ({ service, selectedDate, barberName }: BookingSummaryPro
         </div>
 
         <div className="flex items-center justify-between">
-          <h2 className="text-sm text-gray-400">Horario</h2>
+          <h2 className="text-sm text-gray-400">Horário</h2>
           <p className="text-sm">{format(selectedDate, "HH:mm")}</p>
         </div>
 

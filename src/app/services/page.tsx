@@ -17,8 +17,8 @@ const ServicesPage = async ({ searchParams }: ServicesPageProps) => {
       <>
         <Header />
         <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-          <h1 className="text-xl font-bold md:text-2xl">Servicos</h1>
-          <p className="mt-3 text-sm text-zinc-400">Selecione um barbeiro antes de escolher o servico.</p>
+          <h1 className="text-xl font-bold md:text-2xl">Serviços</h1>
+          <p className="mt-3 text-sm text-zinc-400">Selecione um barbeiro antes de escolher o serviço.</p>
           <Link
             href="/barbers"
             className="mt-6 inline-flex h-10 items-center justify-center rounded-xl bg-violet-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-violet-400"
@@ -39,7 +39,7 @@ const ServicesPage = async ({ searchParams }: ServicesPageProps) => {
       <>
         <Header />
         <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-          <h1 className="text-xl font-bold md:text-2xl">Barbeiro nao encontrado</h1>
+          <h1 className="text-xl font-bold md:text-2xl">Barbeiro não encontrado</h1>
           <Link
             href="/barbers"
             className="mt-6 inline-flex h-10 items-center justify-center rounded-xl bg-violet-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-violet-400"
@@ -70,7 +70,7 @@ const ServicesPage = async ({ searchParams }: ServicesPageProps) => {
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-1">
-              <h1 className="text-xl font-bold md:text-2xl">Servicos</h1>
+              <h1 className="text-xl font-bold md:text-2xl">Serviços</h1>
               <p className="text-sm text-zinc-400">
                 Barbeiro selecionado:{" "}
                 <span className="font-semibold text-zinc-100">
@@ -100,7 +100,7 @@ const ServicesPage = async ({ searchParams }: ServicesPageProps) => {
           </div>
 
           {serializedServices.length === 0 && (
-            <p className="text-sm text-zinc-400">Nenhum servico encontrado.</p>
+            <p className="text-sm text-zinc-400">Nenhum serviço encontrado.</p>
           )}
         </section>
       </main>

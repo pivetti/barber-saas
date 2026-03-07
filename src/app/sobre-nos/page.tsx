@@ -42,10 +42,10 @@ const SobreNosPage = async () => {
                 Sobre nos
               </h2>
               <p className="text-sm leading-6 text-zinc-300">
-                Somos uma barbearia focada em atendimento proximo, tecnica e
-                consistencia. Nosso objetivo e entregar cortes, barba e
-                acabamento com qualidade para que voce saia daqui com visual
-                alinhado e confianca renovada.
+                Somos uma barbearia focada em atendimento próximo, técnica e
+                consistência. Nosso objetivo e entregar cortes, barba e
+                acabamento com qualidade para que você saia daqui com visual
+                alinhado e confiança renovada.
               </p>
             </div>
           </div>

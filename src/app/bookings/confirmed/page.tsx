@@ -4,6 +4,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import Header from "@/app/_components/header"
 import { db } from "@/app/_lib/prisma"
+import ConfirmedBookingActions from "./_components/confirmed-booking-actions"
 
 interface ConfirmedBookingPageProps {
   searchParams?: {
@@ -36,7 +37,7 @@ const ConfirmedBookingPage = async ({ searchParams }: ConfirmedBookingPageProps)
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5">
           <h1 className="text-xl font-bold md:text-2xl">Agendamento confirmado</h1>
           <p className="mt-2 text-sm text-zinc-300">
-            {booking.customerName}, seu horario foi reservado com sucesso.
+            {booking.customerName}, seu horário foi reservado com sucesso.
           </p>
           <p className="mt-1 text-sm text-zinc-400">
             {booking.service.name} com {booking.barber?.name ?? "barbeiro"} em{" "}
@@ -50,23 +51,20 @@ const ConfirmedBookingPage = async ({ searchParams }: ConfirmedBookingPageProps)
             {booking.cancellationToken}
           </p>
           <p className="mt-2 text-xs text-zinc-400">
-            Guarde este token. Com ele voce pode cancelar diretamente ou solicitar cancelamento ao barbeiro.
+            Guarde este token. Com ele você pode cancelar diretamente ou solicitar cancelamento ao barbeiro.
           </p>
 
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <ConfirmedBookingActions
+            token={booking.cancellationToken}
+            canCancel={booking.status === "SCHEDULED"}
+          />
+
+          <div className="mt-3">
             <Link
               href={`/bookings?token=${encodeURIComponent(booking.cancellationToken)}`}
-              className="inline-flex h-10 items-center justify-center rounded-xl bg-violet-500 px-4 text-sm font-semibold text-white hover:bg-violet-400"
+              className="text-xs text-zinc-400 underline underline-offset-4 transition-colors hover:text-zinc-300"
             >
-              Gerenciar este agendamento
-            </Link>
-            <Link
-              href="https://wa.me/5500000000000"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-700 px-4 text-sm font-medium text-zinc-100 transition-colors hover:border-violet-500/40 hover:bg-violet-500/10"
-            >
-              Falar com a barbearia no WhatsApp
+              Ou gerencie este agendamento informando o token.
             </Link>
           </div>
         </section>

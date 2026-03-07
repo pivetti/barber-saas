@@ -27,7 +27,7 @@ const RegisterPage = () => {
     }
 
     if (confirmPassword && password !== confirmPassword) {
-      return "As senhas nao coincidem."
+      return "As senhas não coincidem."
     }
 
     return null
@@ -59,7 +59,7 @@ const RegisterPage = () => {
 
       const registerData = (await registerResponse.json()) as ApiErrorResponse
       if (!registerResponse.ok) {
-        setErrorMessage(registerData.error ?? "Nao foi possivel criar a conta.")
+        setErrorMessage(registerData.error ?? "Não foi possível criar a conta.")
         return
       }
 

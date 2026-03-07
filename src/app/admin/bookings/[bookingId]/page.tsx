@@ -18,7 +18,7 @@ interface BookingDetailPageProps {
 
 const statusLabelMap: Record<string, string> = {
   SCHEDULED: "Agendado",
-  DONE: "Concluido",
+  DONE: "Concluído",
   CANCELED: "Cancelado",
 }
 
@@ -87,7 +87,7 @@ const BookingDetailPage = async ({ params }: BookingDetailPageProps) => {
 
   return (
     <>
-      <AdminHeader adminName={admin.name} />
+      <AdminHeader adminName={admin.name} adminRole={admin.role} />
 
       <main className="mx-auto w-full max-w-5xl px-4 py-6">
         <section className="rounded-3xl border border-zinc-800/80 bg-gradient-to-b from-zinc-900/95 to-zinc-950/85 p-5 shadow-[0_20px_45px_rgba(0,0,0,0.35)] sm:p-6">
@@ -148,7 +148,7 @@ const BookingDetailPage = async ({ params }: BookingDetailPageProps) => {
               <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950/45 p-4 sm:p-5">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-                    Servico
+                    Serviço
                   </p>
                   <Link href={`/admin/bookings/${booking.id}/edit?field=service`} className={editButtonClassName}>
                     Editar
@@ -166,7 +166,7 @@ const BookingDetailPage = async ({ params }: BookingDetailPageProps) => {
               <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950/45 p-4 sm:p-5">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-                    Horario
+                    Horário
                   </p>
                   <Link href={`/admin/bookings/${booking.id}/edit?field=time`} className={editButtonClassName}>
                     Editar
@@ -213,7 +213,7 @@ const BookingDetailPage = async ({ params }: BookingDetailPageProps) => {
 
             <div className="mt-6 rounded-2xl border border-zinc-800/80 bg-zinc-950/45 p-4 sm:p-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-                Acoes
+                Ações
               </p>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

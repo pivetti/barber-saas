@@ -29,7 +29,7 @@ const SignInDialog = () => {
       const data = (await response.json()) as { error?: string }
 
       if (!response.ok) {
-        toast.error(data.error ?? "Nao foi possivel fazer login")
+        toast.error(data.error ?? "Não foi possível fazer login")
         return
       }
 

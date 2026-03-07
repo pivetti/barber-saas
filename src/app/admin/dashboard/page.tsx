@@ -15,7 +15,7 @@ interface DashboardPageProps {
 
 const statusLabelMap: Record<string, string> = {
   SCHEDULED: "Agendado",
-  DONE: "Concluido",
+  DONE: "Concluído",
   CANCELED: "Cancelado",
 }
 
@@ -85,7 +85,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
 
   return (
     <>
-      <AdminHeader adminName={admin.name} />
+      <AdminHeader adminName={admin.name} adminRole={admin.role} />
 
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
         <section className="rounded-3xl border border-zinc-800/80 bg-gradient-to-b from-zinc-900/95 to-zinc-950/85 p-5 shadow-[0_20px_45px_rgba(0,0,0,0.35)] sm:p-6">
@@ -95,7 +95,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
                 Painel
               </p>
               <h1 className="text-2xl font-bold leading-tight text-zinc-100 md:text-3xl">
-                Agenda diaria
+                Agenda
               </h1>
               <p className="max-w-xl text-sm leading-relaxed text-zinc-400">
                 Visualize e acompanhe os agendamentos por dia com mais clareza.
@@ -130,7 +130,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
             <Link
               href={`/admin/dashboard?date=${format(nextDate, "yyyy-MM-dd")}`}
               className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm font-semibold text-zinc-200 transition-all hover:border-violet-500/40 hover:bg-zinc-800 hover:text-zinc-100"
-              aria-label="Proximo dia"
+              aria-label="Próximo dia"
             >
               <ChevronRight className="h-4 w-4" />
             </Link>
@@ -151,7 +151,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
                 className="rounded-2xl border border-zinc-800/90 bg-gradient-to-b from-zinc-900/90 to-zinc-950/80 px-3 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.25)] transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-500/30 hover:shadow-[0_14px_30px_rgba(0,0,0,0.32)]"
               >
                 <div className="flex h-full flex-col gap-3">
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-3 md:min-h-[52px]">
                     <p className="shrink-0 text-2xl font-bold leading-none text-violet-200">
                       {format(booking.date, "HH:mm")}
                     </p>

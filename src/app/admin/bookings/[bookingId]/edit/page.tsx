@@ -33,16 +33,16 @@ const isEditableBookingField = (field?: string): field is EditableBookingField =
 
 const getFieldTitle = (field: EditableBookingField) => {
   if (field === "client") return "Editar cliente"
-  if (field === "service") return "Editar servico"
-  if (field === "time") return "Editar horario"
+  if (field === "service") return "Editar serviço"
+  if (field === "time") return "Editar horário"
   return "Editar data"
 }
 
 const getFieldDescription = (field: EditableBookingField) => {
   if (field === "client") return "Atualize o nome e telefone do cliente."
-  if (field === "service") return "Troque o servico vinculado ao agendamento."
-  if (field === "time") return "Altere apenas o horario mantendo a data atual."
-  return "Altere apenas a data mantendo o horario atual."
+  if (field === "service") return "Troque o serviço vinculado ao agendamento."
+  if (field === "time") return "Altere apenas o horário mantendo a data atual."
+  return "Altere apenas a data mantendo o horário atual."
 }
 
 const BookingEditPage = async ({ params, searchParams }: BookingEditPageProps) => {
@@ -81,7 +81,7 @@ const BookingEditPage = async ({ params, searchParams }: BookingEditPageProps) =
 
   return (
     <>
-      <AdminHeader adminName={admin.name} />
+      <AdminHeader adminName={admin.name} adminRole={admin.role} />
 
       <main className="mx-auto w-full max-w-5xl px-4 py-6">
         <section className="rounded-3xl border border-zinc-800/80 bg-gradient-to-b from-zinc-900/95 to-zinc-950/85 p-5 shadow-[0_20px_45px_rgba(0,0,0,0.35)] sm:p-6">
@@ -161,7 +161,7 @@ const BookingEditPage = async ({ params, searchParams }: BookingEditPageProps) =
                   htmlFor="serviceId"
                   className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500"
                 >
-                  Servico
+                  Serviço
                 </label>
                 <select
                   id="serviceId"
@@ -185,7 +185,7 @@ const BookingEditPage = async ({ params, searchParams }: BookingEditPageProps) =
                   htmlFor="time"
                   className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500"
                 >
-                  Horario
+                  Horário
                 </label>
                 <Input
                   id="time"
@@ -226,7 +226,7 @@ const BookingEditPage = async ({ params, searchParams }: BookingEditPageProps) =
               </Link>
               <Button type="submit" className="h-11 px-5 text-sm font-semibold">
                 <Save className="mr-1.5 h-4 w-4" />
-                Salvar alteracoes
+                Salvar alterações
               </Button>
             </div>
           </form>

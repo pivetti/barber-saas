@@ -1,5 +1,6 @@
 import { cookies } from "next/headers"
 import jwt, { JwtPayload } from "jsonwebtoken"
+import { getAppEnv } from "./env"
 import { db } from "./prisma"
 
 export const AUTH_COOKIE_NAME = "auth_token"
@@ -19,13 +20,7 @@ export interface AuthUser {
 }
 
 const getJwtSecret = () => {
-  const secret = process.env.JWT_SECRET
-
-  if (!secret) {
-    throw new Error("JWT_SECRET is not configured")
-  }
-
-  return secret
+  return getAppEnv().JWT_SECRET
 }
 
 export const signAuthToken = (payload: AuthTokenPayload) => {

@@ -127,7 +127,7 @@ const getTimeList = ({ bookings, selectedDay, availableTimes }: GetTimeListProps
       return {
         time,
         available: false,
-        unavailableMessage: "Este horario ja passou.",
+        unavailableMessage: "Este horário ja passou.",
       }
     }
 
@@ -140,7 +140,7 @@ const getTimeList = ({ bookings, selectedDay, availableTimes }: GetTimeListProps
       return {
         time,
         available: false,
-        unavailableMessage: "Este horario ja esta agendado. Escolha outro.",
+        unavailableMessage: "Este horário ja esta agendado. Escolha outro.",
       }
     }
 
@@ -251,7 +251,7 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
     }
 
     if (!selectedDate) {
-      toast.error("Selecione data e horario")
+      toast.error("Selecione data e horário")
       return
     }
 
@@ -334,7 +334,7 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
           <SheetHeader>
             <SheetTitle>Fazer reserva</SheetTitle>
             <SheetDescription className="sr-only">
-              Escolha data e horario para confirmar sua reserva.
+              Escolha data e horário para confirmar sua reserva.
             </SheetDescription>
           </SheetHeader>
 
@@ -362,7 +362,7 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
                         variant={selectedTime === slot.time ? "default" : "outline"}
                         onClick={() => {
                           if (!slot.available) {
-                            toast.error(slot.unavailableMessage ?? "Horario indisponivel.")
+                            toast.error(slot.unavailableMessage ?? "Horário indisponivel.")
                             return
                           }
 
@@ -380,7 +380,7 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
                   </div>
                 ) : (
                   <div className="mt-5 rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 text-center text-sm text-zinc-400">
-                    Sem horarios disponiveis para esta data.
+                    Sem horários disponiveis para esta data.
                   </div>
                 )}
               </>

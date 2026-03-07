@@ -62,26 +62,26 @@ const ScheduleAdminPage = async () => {
 
   return (
     <>
-      <AdminHeader adminName={admin.name} />
+      <AdminHeader adminName={admin.name} adminRole={admin.role} />
 
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
         <section className="rounded-3xl border border-zinc-800/80 bg-gradient-to-b from-zinc-900/95 to-zinc-950/85 p-5 shadow-[0_20px_45px_rgba(0,0,0,0.35)] sm:p-6">
           <div className="space-y-2">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-300/80">
-              Agenda
+              Horários
             </p>
             <h1 className="text-2xl font-bold leading-tight text-zinc-100 md:text-3xl">
-              Agenda profissional
+              Gestão de horários
             </h1>
             <p className="max-w-2xl text-sm leading-relaxed text-zinc-400">
-              Configure bloqueios, intervalo entre horarios e jornada semanal com o mesmo padrao visual do painel.
+              Configure bloqueios, intervalo entre horários e jornada semanal com o mesmo padrao visual do painel.
             </p>
           </div>
         </section>
 
         <section className="mt-6 rounded-3xl border border-zinc-800/80 bg-zinc-950/55 p-4 sm:p-5">
           <div className="rounded-2xl border border-zinc-800/80 bg-gradient-to-b from-zinc-900/90 to-zinc-950/80 p-4 sm:p-5">
-            <h2 className="text-lg font-semibold text-zinc-100">Bloqueios de horario</h2>
+            <h2 className="text-lg font-semibold text-zinc-100">Bloqueios de horário</h2>
             <p className="mt-1 text-sm text-zinc-400">
               Crie bloqueios por data com hora inicial e final. Exemplo: 22/03, 10:00 ate 11:00.
             </p>
@@ -158,7 +158,7 @@ const ScheduleAdminPage = async () => {
           </div>
 
           <div className="mt-4 rounded-2xl border border-zinc-800/80 bg-gradient-to-b from-zinc-900/90 to-zinc-950/80 p-4 sm:p-5">
-            <h2 className="text-lg font-semibold text-zinc-100">Intervalo entre horarios</h2>
+            <h2 className="text-lg font-semibold text-zinc-100">Intervalo entre horários</h2>
             <p className="mt-1 text-sm text-zinc-400">
               Este intervalo define a geracao automatica dos slots de agendamento.
             </p>
@@ -178,7 +178,7 @@ const ScheduleAdminPage = async () => {
                 </select>
               </label>
               <Button type="submit" className="rounded-xl border border-violet-500/35 bg-violet-500/10 text-violet-100 hover:bg-violet-500/20">
-                Salvar configuracao
+                Salvar configuração
               </Button>
             </form>
           </div>
@@ -186,7 +186,7 @@ const ScheduleAdminPage = async () => {
 
         <section className="mt-6 rounded-3xl border border-zinc-800/80 bg-zinc-950/55 p-4 sm:p-5">
           <div className="rounded-2xl border border-zinc-800/80 bg-gradient-to-b from-zinc-900/90 to-zinc-950/80 p-4 sm:p-5">
-            <h2 className="text-lg font-semibold text-zinc-100">Horario de trabalho semanal</h2>
+            <h2 className="text-lg font-semibold text-zinc-100">Horário de trabalho semanal</h2>
             <p className="mt-1 text-sm text-zinc-400">
               Adicione um ou mais intervalos por dia. Dias sem intervalos sao tratados como fechados.
             </p>
@@ -237,7 +237,7 @@ const ScheduleAdminPage = async () => {
                     <form action={addWorkingHour} className="mt-3 grid grid-cols-2 gap-2">
                       <input type="hidden" name="dayOfWeek" value={day.value} />
                       <label className="text-xs text-zinc-400">
-                        Inicio
+                        Início
                         <Input
                           type="time"
                           name="startTime"

@@ -15,7 +15,7 @@ interface AdminLoginFormProps {
 
 const AdminLoginForm = ({ nextPath }: AdminLoginFormProps) => {
   const router = useRouter()
-  const [identifier, setIdentifier] = useState("")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -32,7 +32,7 @@ const AdminLoginForm = ({ nextPath }: AdminLoginFormProps) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          identifier,
+          email,
           password,
         }),
       })
@@ -40,7 +40,7 @@ const AdminLoginForm = ({ nextPath }: AdminLoginFormProps) => {
       const data = (await response.json()) as ApiErrorResponse
 
       if (!response.ok) {
-        setErrorMessage(data.error ?? "Nao foi possivel fazer login")
+        setErrorMessage(data.error ?? "Não foi possível fazer login")
         return
       }
 
@@ -56,10 +56,10 @@ const AdminLoginForm = ({ nextPath }: AdminLoginFormProps) => {
   return (
     <form className="space-y-3" onSubmit={handleSubmit}>
       <Input
-        type="text"
-        placeholder="Email ou telefone"
-        value={identifier}
-        onChange={(event) => setIdentifier(event.target.value)}
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
         required
       />
       <Input

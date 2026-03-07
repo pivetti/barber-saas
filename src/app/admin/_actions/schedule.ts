@@ -29,11 +29,11 @@ const parseTimeRange = (start: string, end: string) => {
   const endTime = normalizeTime(end)
 
   if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
-    throw new Error("Horario invalido")
+    throw new Error("Horário inválido")
   }
 
   if (timeToMinutes(startTime) >= timeToMinutes(endTime)) {
-    throw new Error("Horario inicial deve ser menor que o horario final")
+    throw new Error("Horário inicial deve ser menor que o horário final")
   }
 
   return {
@@ -52,7 +52,7 @@ export const updateSlotInterval = async (formData: FormData) => {
   const slotIntervalMinutes = Number(formData.get("slotIntervalMinutes"))
 
   if (!validSlotIntervals.has(slotIntervalMinutes)) {
-    throw new Error("Intervalo invalido")
+    throw new Error("Intervalo inválido")
   }
 
   await db.scheduleSettings.upsert({
@@ -81,7 +81,7 @@ export const addWorkingHour = async (formData: FormData) => {
   )
 
   if (Number.isNaN(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) {
-    throw new Error("Dia da semana invalido")
+    throw new Error("Dia da semana inválido")
   }
 
   await db.workingHour.upsert({

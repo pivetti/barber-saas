@@ -18,7 +18,7 @@ const AdminLoginPage = ({ searchParams }: AdminLoginPageProps) => {
           <div>
             <h1 className="text-2xl font-bold">Login Admin</h1>
             <p className="text-sm text-zinc-400">
-              Entre com email ou telefone e sua senha.
+              Entre com seu email e senha.
             </p>
           </div>
 

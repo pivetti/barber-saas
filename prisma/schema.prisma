@@ -13,6 +13,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum BarberRole {
+  OWNER
+  ADMIN
+  BARBER
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String   @unique
@@ -39,6 +45,8 @@ model Barber {
   phone           String?             @unique
   password        String?
   imageUrl        String
+  role            BarberRole          @default(BARBER)
+  isActive        Boolean             @default(true)
   bookings        Booking[]
   availabilities  BarberAvailability[]
   blockedDays     BarberBlockedDay[]

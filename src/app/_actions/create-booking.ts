@@ -88,15 +88,15 @@ export const createBooking = async (params: CreateBookingParams) => {
   const maxBookingDate = endOfDay(addWeeks(new Date(), 4))
 
   if (params.date < todayStart) {
-    throw new Error("Nao e possivel agendar em datas passadas")
+    throw new Error("Não e possível agendar em datas passadas")
   }
 
   if (params.date > maxBookingDate) {
-    throw new Error("Voce so pode agendar ate 4 semanas a partir de hoje")
+    throw new Error("Você so pode agendar ate 4 semanas a partir de hoje")
   }
 
   if (isSundayOrBrazilHoliday(params.date)) {
-    throw new Error("Nao e possivel agendar aos domingos e feriados nacionais")
+    throw new Error("Não e possível agendar aos domingos e feriados nacionais")
   }
 
   const availableTimes = await getBarberAvailableTimesForDate({
@@ -106,7 +106,7 @@ export const createBooking = async (params: CreateBookingParams) => {
 
   const selectedTime = format(params.date, "HH:mm")
   if (!availableTimes.includes(selectedTime)) {
-    throw new Error("Este horario esta indisponivel. Escolha outro.")
+    throw new Error("Este horário esta indisponivel. Escolha outro.")
   }
 
   const conflictingBooking = await db.booking.findFirst({
@@ -120,7 +120,7 @@ export const createBooking = async (params: CreateBookingParams) => {
   })
 
   if (conflictingBooking) {
-    throw new Error("Este horario ja esta agendado. Escolha outro.")
+    throw new Error("Este horário ja esta agendado. Escolha outro.")
   }
 
   const booking = await db.booking.create({

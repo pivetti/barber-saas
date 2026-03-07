@@ -1,5 +1,7 @@
 import { cookies } from "next/headers"
 import jwt, { JwtPayload } from "jsonwebtoken"
+import { BarberRole } from "@prisma/client"
+import { getAppEnv } from "./env"
 import { db } from "./prisma"
 
 export const ADMIN_AUTH_COOKIE_NAME = "admin_auth_token"
@@ -11,6 +13,7 @@ export interface AdminAuthTokenPayload extends JwtPayload {
   name: string
   phone?: string | null
   email?: string | null
+  role: BarberRole
 }
 
 export interface AdminAuthUser {
@@ -18,16 +21,12 @@ export interface AdminAuthUser {
   name: string
   phone: string | null
   email: string | null
+  role: BarberRole
+  isActive: boolean
 }
 
 const getJwtSecret = () => {
-  const secret = process.env.JWT_SECRET
-
-  if (!secret) {
-    throw new Error("JWT_SECRET is not configured")
-  }
-
-  return secret
+  return getAppEnv().JWT_SECRET
 }
 
 export const signAdminAuthToken = (payload: AdminAuthTokenPayload) => {
@@ -45,6 +44,10 @@ export const verifyAdminAuthToken = (token: string): AdminAuthTokenPayload | nul
     }
 
     if (!decoded.sub || !decoded.name) {
+      return null
+    }
+
+    if (!decoded.role) {
       return null
     }
 
@@ -75,10 +78,12 @@ export const getAdminFromToken = async (): Promise<AdminAuthUser | null> => {
       phone: true,
       email: true,
       password: true,
+      role: true,
+      isActive: true,
     },
   })
 
-  if (!barber?.password) {
+  if (!barber?.password || !barber.isActive) {
     return null
   }
 
@@ -87,6 +92,8 @@ export const getAdminFromToken = async (): Promise<AdminAuthUser | null> => {
     name: barber.name,
     phone: barber.phone ?? null,
     email: barber.email ?? null,
+    role: barber.role,
+    isActive: barber.isActive,
   }
 }
 
