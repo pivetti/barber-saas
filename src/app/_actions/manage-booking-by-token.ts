@@ -1,24 +1,30 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { z } from "zod"
+import {
+  customerNameSchema,
+  dateInputSchema,
+  idSchema,
+  phoneSchema,
+  timeInputSchema,
+} from "../_lib/input-validation"
 import { db } from "../_lib/prisma"
+import {
+  clearPublicBookingSession,
+  createPublicBookingSession,
+  getPublicBookingFromSession,
+} from "../_lib/public-booking-session"
+import { RateLimitExceededError, checkRateLimit } from "../_lib/rate-limit"
+import { getRequestIp } from "../_lib/request-ip"
 
+const CANCELLATION_TOKEN_REGEX = /^ct_[a-f0-9]{32}$/i
+const INVALID_TOKEN_DELAY_MS = 250
+const GENERIC_MESSAGE = "Nao foi possivel processar sua solicitacao agora"
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 const normalizeToken = (token: string) => token.trim()
 const normalizePhone = (phone: string) => phone.replace(/\D/g, "")
-
-const findBookingByToken = async (token: string) => {
-  if (!token) {
-    return null
-  }
-
-  return db.booking.findUnique({
-    where: { cancellationToken: token },
-    include: {
-      service: true,
-      barber: true,
-    },
-  })
-}
 
 const parseDateTimeFromForm = (date: string, time: string) => {
   const dateMatch = date.match(/^(\d{4})-(\d{2})-(\d{2})$/)
@@ -38,11 +44,7 @@ const parseDateTimeFromForm = (date: string, time: string) => {
     0,
   )
 
-  if (Number.isNaN(parsedDate.getTime())) {
-    return null
-  }
-
-  return parsedDate
+  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate
 }
 
 interface CancellationRequestWithoutTokenInput {
@@ -53,81 +55,107 @@ interface CancellationRequestWithoutTokenInput {
   time: string
 }
 
-const findCandidateBookings = async (input: CancellationRequestWithoutTokenInput) => {
-  const normalizedName = input.customerName.trim()
-  const normalizedPhone = normalizePhone(input.customerPhone)
-  const parsedDateTime = parseDateTimeFromForm(input.date, input.time)
+const cancellationRequestWithoutTokenSchema = z.object({
+  customerName: customerNameSchema,
+  customerPhone: phoneSchema,
+  barberId: idSchema,
+  date: dateInputSchema,
+  time: timeInputSchema,
+})
 
-  if (
-    normalizedName.length < 2 ||
-    normalizedPhone.length < 10 ||
-    !input.barberId ||
-    !parsedDateTime
-  ) {
-    return { ok: false as const, message: "Preencha todos os campos corretamente" }
-  }
+const applyPublicRateLimit = async () => {
+  const ipAddress = await getRequestIp()
+  const result = await checkRateLimit(ipAddress, "manage-booking-by-token")
 
-  const minuteStart = new Date(parsedDateTime)
-  const minuteEnd = new Date(parsedDateTime)
-  minuteEnd.setMinutes(minuteEnd.getMinutes() + 1)
-
-  const bookings = await db.booking.findMany({
-    where: {
-      customerName: {
-        equals: normalizedName,
-        mode: "insensitive",
-      },
-      customerPhone: normalizedPhone,
-      barberId: input.barberId,
-      date: {
-        gte: minuteStart,
-        lt: minuteEnd,
-      },
-      status: "SCHEDULED",
-    },
-    include: {
-      service: true,
-      barber: true,
-    },
-    orderBy: {
-      date: "asc",
-    },
-  })
-
-  return {
-    ok: true as const,
-    bookings,
+  if (!result.allowed) {
+    throw new RateLimitExceededError("manage-booking-by-token", result.retryAfter ?? 60)
   }
 }
 
+const mapPublicBooking = (booking: NonNullable<Awaited<ReturnType<typeof getPublicBookingFromSession>>>) => ({
+  id: booking.id,
+  status: booking.status,
+  customerName: booking.customerName,
+  customerPhone: booking.customerPhone,
+  date: booking.date,
+  cancellationRequested: booking.cancellationRequested,
+  serviceName: booking.service.name,
+  barberName: booking.barber?.name ?? null,
+})
+
 const revalidateBookingPaths = () => {
   revalidatePath("/bookings")
+  revalidatePath("/bookings/confirmed")
   revalidatePath("/admin/bookings")
   revalidatePath("/admin/dashboard")
 }
 
-export const getPublicBookingByToken = async (token: string) => {
-  const booking = await findBookingByToken(normalizeToken(token))
+export const startPublicBookingSessionWithToken = async (token: string) => {
+  try {
+    await applyPublicRateLimit()
+  } catch (error) {
+    if (error instanceof RateLimitExceededError) {
+      return { ok: false as const, message: GENERIC_MESSAGE, retryAfter: error.retryAfter }
+    }
+
+    throw error
+  }
+
+  const normalizedToken = normalizeToken(token)
+  if (!CANCELLATION_TOKEN_REGEX.test(normalizedToken)) {
+    await clearPublicBookingSession()
+    await delay(INVALID_TOKEN_DELAY_MS)
+    return { ok: false as const, message: GENERIC_MESSAGE }
+  }
+
+  const booking = await db.booking.findUnique({
+    where: { cancellationToken: normalizedToken },
+    select: { id: true },
+  })
+
+  if (!booking) {
+    await clearPublicBookingSession()
+    await delay(INVALID_TOKEN_DELAY_MS)
+    return { ok: false as const, message: GENERIC_MESSAGE }
+  }
+
+  await createPublicBookingSession(booking.id)
+  return { ok: true as const }
+}
+
+export const getManagedPublicBooking = async () => {
+  try {
+    await applyPublicRateLimit()
+  } catch (error) {
+    if (error instanceof RateLimitExceededError) {
+      return null
+    }
+
+    throw error
+  }
+
+  const booking = await getPublicBookingFromSession()
   if (!booking) {
     return null
   }
 
-  return {
-    id: booking.id,
-    status: booking.status,
-    customerName: booking.customerName,
-    customerPhone: booking.customerPhone,
-    date: booking.date,
-    cancellationRequested: booking.cancellationRequested,
-    serviceName: booking.service.name,
-    barberName: booking.barber?.name ?? null,
-  }
+  return mapPublicBooking(booking)
 }
 
-export const cancelBookingByToken = async (token: string) => {
-  const booking = await findBookingByToken(normalizeToken(token))
+export const cancelManagedBooking = async () => {
+  try {
+    await applyPublicRateLimit()
+  } catch (error) {
+    if (error instanceof RateLimitExceededError) {
+      return { ok: false, message: GENERIC_MESSAGE, retryAfter: error.retryAfter }
+    }
+
+    throw error
+  }
+
+  const booking = await getPublicBookingFromSession()
   if (!booking) {
-    return { ok: false, message: "Token inválido" }
+    return { ok: false, message: GENERIC_MESSAGE }
   }
 
   if (booking.status === "CANCELED") {
@@ -135,7 +163,7 @@ export const cancelBookingByToken = async (token: string) => {
   }
 
   if (booking.status === "DONE" || booking.date < new Date()) {
-    return { ok: false, message: "Não e possível cancelar um agendamento encerrado" }
+    return { ok: false, message: "Nao e possivel cancelar um agendamento encerrado" }
   }
 
   await db.booking.update({
@@ -148,14 +176,23 @@ export const cancelBookingByToken = async (token: string) => {
   })
 
   revalidateBookingPaths()
-
   return { ok: true, message: "Agendamento cancelado com sucesso" }
 }
 
-export const requestCancellationByToken = async (token: string) => {
-  const booking = await findBookingByToken(normalizeToken(token))
+export const requestManagedCancellation = async () => {
+  try {
+    await applyPublicRateLimit()
+  } catch (error) {
+    if (error instanceof RateLimitExceededError) {
+      return { ok: false, message: GENERIC_MESSAGE, retryAfter: error.retryAfter }
+    }
+
+    throw error
+  }
+
+  const booking = await getPublicBookingFromSession()
   if (!booking) {
-    return { ok: false, message: "Token inválido" }
+    return { ok: false, message: GENERIC_MESSAGE }
   }
 
   if (booking.status === "CANCELED") {
@@ -179,13 +216,68 @@ export const requestCancellationByToken = async (token: string) => {
   })
 
   revalidateBookingPaths()
+  return { ok: true, message: "Solicitacao de cancelamento enviada ao barbeiro" }
+}
 
-  return { ok: true, message: "Solicitação de cancelamento enviada ao barbeiro" }
+const findCandidateBookings = async (input: CancellationRequestWithoutTokenInput) => {
+  const parsedInput = cancellationRequestWithoutTokenSchema.safeParse(input)
+  if (!parsedInput.success) {
+    return { ok: false as const, message: "Preencha todos os campos corretamente" }
+  }
+
+  const normalizedName = parsedInput.data.customerName
+  const normalizedPhone = normalizePhone(parsedInput.data.customerPhone)
+  const parsedDateTime = parseDateTimeFromForm(parsedInput.data.date, parsedInput.data.time)
+  if (!parsedDateTime) {
+    return { ok: false as const, message: "Preencha todos os campos corretamente" }
+  }
+
+  const minuteStart = new Date(parsedDateTime)
+  const minuteEnd = new Date(parsedDateTime)
+  minuteEnd.setMinutes(minuteEnd.getMinutes() + 1)
+
+  const bookings = await db.booking.findMany({
+    where: {
+      customerName: {
+        equals: normalizedName,
+        mode: "insensitive",
+      },
+      customerPhone: normalizedPhone,
+      barberId: parsedInput.data.barberId,
+      date: {
+        gte: minuteStart,
+        lt: minuteEnd,
+      },
+      status: "SCHEDULED",
+    },
+    include: {
+      service: true,
+      barber: true,
+    },
+    orderBy: {
+      date: "asc",
+    },
+  })
+
+  return {
+    ok: true as const,
+    bookings,
+  }
 }
 
 export const requestCancellationWithoutToken = async (
   input: CancellationRequestWithoutTokenInput,
 ) => {
+  try {
+    await applyPublicRateLimit()
+  } catch (error) {
+    if (error instanceof RateLimitExceededError) {
+      return { ok: false, message: GENERIC_MESSAGE, retryAfter: error.retryAfter }
+    }
+
+    throw error
+  }
+
   const result = await findCandidateBookings(input)
   if (!result.ok) {
     return result
@@ -199,11 +291,9 @@ export const requestCancellationWithoutToken = async (
     return {
       ok: true,
       requiresConfirmation: true as const,
-      message: "Encontramos mais de um agendamento. Confirme qual você deseja cancelar.",
+      message: "Encontramos mais de um agendamento. Confirme qual voce deseja cancelar.",
       candidates: result.bookings.map((booking) => ({
         id: booking.id,
-        customerName: booking.customerName,
-        customerPhone: booking.customerPhone,
         serviceName: booking.service.name,
         barberName: booking.barber?.name ?? null,
         date: booking.date,
@@ -212,7 +302,6 @@ export const requestCancellationWithoutToken = async (
   }
 
   const booking = result.bookings[0]
-
   if (booking.cancellationRequested) {
     return { ok: false, message: "Cancelamento ja solicitado para este agendamento" }
   }
@@ -226,16 +315,25 @@ export const requestCancellationWithoutToken = async (
   })
 
   revalidateBookingPaths()
-
-  return { ok: true, message: "Solicitação de cancelamento enviada ao barbeiro" }
+  return { ok: true, message: "Solicitacao de cancelamento enviada ao barbeiro" }
 }
 
 export const confirmCancellationWithoutToken = async (
   bookingId: string,
   input: CancellationRequestWithoutTokenInput,
 ) => {
+  try {
+    await applyPublicRateLimit()
+  } catch (error) {
+    if (error instanceof RateLimitExceededError) {
+      return { ok: false, message: GENERIC_MESSAGE, retryAfter: error.retryAfter }
+    }
+
+    throw error
+  }
+
   if (!bookingId) {
-    return { ok: false, message: "Agendamento inválido" }
+    return { ok: false, message: "Agendamento invalido" }
   }
 
   const result = await findCandidateBookings(input)
@@ -245,7 +343,7 @@ export const confirmCancellationWithoutToken = async (
 
   const booking = result.bookings.find((item) => item.id === bookingId)
   if (!booking) {
-    return { ok: false, message: "Não foi possível confirmar este agendamento" }
+    return { ok: false, message: "Nao foi possivel confirmar este agendamento" }
   }
 
   if (booking.cancellationRequested) {
@@ -261,6 +359,37 @@ export const confirmCancellationWithoutToken = async (
   })
 
   revalidateBookingPaths()
+  return { ok: true, message: "Solicitacao de cancelamento enviada ao barbeiro" }
+}
 
-  return { ok: true, message: "Solicitação de cancelamento enviada ao barbeiro" }
+// Compat wrappers (legacy callers)
+export const getPublicBookingByToken = async (token: string) => {
+  const session = await startPublicBookingSessionWithToken(token)
+  if (!session.ok) {
+    return null
+  }
+
+  return getManagedPublicBooking()
+}
+
+export const cancelBookingByToken = async (token?: string) => {
+  if (token) {
+    const session = await startPublicBookingSessionWithToken(token)
+    if (!session.ok) {
+      return session
+    }
+  }
+
+  return cancelManagedBooking()
+}
+
+export const requestCancellationByToken = async (token?: string) => {
+  if (token) {
+    const session = await startPublicBookingSessionWithToken(token)
+    if (!session.ok) {
+      return session
+    }
+  }
+
+  return requestManagedCancellation()
 }

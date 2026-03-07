@@ -160,3 +160,17 @@ model AdminLoginAttempt {
   @@unique([email, ipAddress])
   @@index([blockedUntil])
 }
+
+model RateLimitAttempt {
+  id              String   @id @default(uuid())
+  ipAddress       String
+  route           String
+  attemptCount    Int      @default(0)
+  windowStartedAt DateTime
+  blockedUntil    DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([ipAddress, route])
+  @@index([blockedUntil])
+}

@@ -1,5 +1,6 @@
 import AdminLoginForm from "./admin-login-form"
 import Header from "@/app/_components/header"
+import { resolveSafePath } from "@/app/_lib/safe-redirect"
 
 interface AdminLoginPageProps {
   searchParams?: {
@@ -8,7 +9,10 @@ interface AdminLoginPageProps {
 }
 
 const AdminLoginPage = ({ searchParams }: AdminLoginPageProps) => {
-  const nextPath = searchParams?.next || "/admin/dashboard"
+  const nextPath = resolveSafePath(searchParams?.next, {
+    fallback: "/admin/dashboard",
+    requiredPrefix: "/admin/",
+  })
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-950">

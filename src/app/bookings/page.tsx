@@ -1,6 +1,7 @@
 import BookingTokenManager from "./_components/booking-token-manager"
 import Header from "../_components/header"
 import { db } from "../_lib/prisma"
+import { redirect } from "next/navigation"
 
 interface BookingsPageProps {
   searchParams?: {
@@ -9,7 +10,11 @@ interface BookingsPageProps {
 }
 
 const BookingsPage = async ({ searchParams }: BookingsPageProps) => {
-  const token = searchParams?.token ?? ""
+  const token = searchParams?.token?.trim()
+  if (token) {
+    redirect(`/bookings/session?token=${encodeURIComponent(token)}&next=/bookings`)
+  }
+
   const barbers = await db.barber.findMany({
     orderBy: {
       name: "asc",
@@ -24,7 +29,7 @@ const BookingsPage = async ({ searchParams }: BookingsPageProps) => {
     <>
       <Header />
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-        <BookingTokenManager initialToken={token} barbers={barbers} />
+        <BookingTokenManager barbers={barbers} />
       </main>
     </>
   )

@@ -129,7 +129,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isAdminLogin) {
-    return NextResponse.redirect(new URL("/admin/dashboard", request.url))
+    return NextResponse.next()
   }
 
   const nowInSeconds = Math.floor(Date.now() / 1000)
@@ -157,7 +157,7 @@ export async function middleware(request: NextRequest) {
   response.cookies.set(ADMIN_AUTH_COOKIE_NAME, renewedToken, {
     httpOnly: true,
     sameSite: "strict",
-    secure: request.nextUrl.protocol === "https:",
+    secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: ADMIN_AUTH_EXPIRES_IN_SECONDS,
   })

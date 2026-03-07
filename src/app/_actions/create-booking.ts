@@ -4,8 +4,13 @@ import { randomBytes } from "crypto"
 import { addWeeks, endOfDay, getDay, isSameDay, startOfDay } from "date-fns"
 import { revalidatePath } from "next/cache"
 import { format } from "date-fns"
+import { z } from "zod"
 import { getBarberAvailableTimesForDate } from "../_lib/barber-schedule"
+import { customerNameSchema, idSchema, phoneSchema } from "../_lib/input-validation"
 import { db } from "../_lib/prisma"
+import { createPublicBookingSession } from "../_lib/public-booking-session"
+import { enforceRateLimit } from "../_lib/rate-limit"
+import { getRequestIp } from "../_lib/request-ip"
 
 interface CreateBookingParams {
   serviceId: string
@@ -69,50 +74,73 @@ const isSundayOrBrazilHoliday = (date: Date) => {
 }
 
 export const createBooking = async (params: CreateBookingParams) => {
-  const customerName = params.customerName.trim()
-  const customerPhone = params.customerPhone.replace(/\D/g, "")
+  const ipAddress = await getRequestIp()
+  await enforceRateLimit(ipAddress, "create-booking")
 
-  if (customerName.length < 2) {
-    throw new Error("Informe um nome valido")
+  const parsed = z
+    .object({
+      serviceId: idSchema,
+      barberId: idSchema,
+      date: z.date(),
+      customerName: customerNameSchema,
+      customerPhone: phoneSchema,
+    })
+    .safeParse(params)
+
+  if (!parsed.success) {
+    throw new Error("Dados de agendamento invalidos")
   }
 
-  if (customerPhone.length < 10) {
-    throw new Error("Informe um telefone valido com DDD")
-  }
-
-  if (!params.barberId) {
-    throw new Error("Selecione um barbeiro")
-  }
+  const { serviceId, barberId, date, customerName, customerPhone } = parsed.data
 
   const todayStart = startOfDay(new Date())
   const maxBookingDate = endOfDay(addWeeks(new Date(), 4))
 
-  if (params.date < todayStart) {
+  if (date < todayStart) {
     throw new Error("Não e possível agendar em datas passadas")
   }
 
-  if (params.date > maxBookingDate) {
+  if (date > maxBookingDate) {
     throw new Error("Você so pode agendar ate 4 semanas a partir de hoje")
   }
 
-  if (isSundayOrBrazilHoliday(params.date)) {
+  if (isSundayOrBrazilHoliday(date)) {
     throw new Error("Não e possível agendar aos domingos e feriados nacionais")
   }
 
+  const [service, barber] = await Promise.all([
+    db.service.findUnique({
+      where: { id: serviceId },
+      select: { id: true },
+    }),
+    db.barber.findUnique({
+      where: { id: barberId },
+      select: { id: true, isActive: true },
+    }),
+  ])
+
+  if (!service) {
+    throw new Error("Servico invalido")
+  }
+
+  if (!barber || !barber.isActive) {
+    throw new Error("Barbeiro indisponivel")
+  }
+
   const availableTimes = await getBarberAvailableTimesForDate({
-    barberId: params.barberId,
-    date: params.date,
+    barberId,
+    date,
   })
 
-  const selectedTime = format(params.date, "HH:mm")
+  const selectedTime = format(date, "HH:mm")
   if (!availableTimes.includes(selectedTime)) {
     throw new Error("Este horário esta indisponivel. Escolha outro.")
   }
 
   const conflictingBooking = await db.booking.findFirst({
     where: {
-      barberId: params.barberId,
-      date: params.date,
+      barberId,
+      date,
       status: {
         not: "CANCELED",
       },
@@ -125,18 +153,19 @@ export const createBooking = async (params: CreateBookingParams) => {
 
   const booking = await db.booking.create({
     data: {
-      serviceId: params.serviceId,
-      barberId: params.barberId,
-      date: params.date,
+      serviceId,
+      barberId,
+      date,
       customerName,
       customerPhone,
       cancellationToken: `ct_${randomBytes(16).toString("hex")}`,
     },
     select: {
       id: true,
-      cancellationToken: true,
     },
   })
+
+  await createPublicBookingSession(booking.id)
 
   revalidatePath("/")
   revalidatePath("/bookings")

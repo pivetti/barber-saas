@@ -1,6 +1,6 @@
 "use client"
 
-import { Booking, Service } from "@prisma/client"
+import { Service } from "@prisma/client"
 import {
   addWeeks,
   endOfDay,
@@ -43,7 +43,7 @@ interface ServiceItemProps {
 }
 
 interface GetTimeListProps {
-  bookings: Booking[]
+  bookings: Array<{ date: Date }>
   selectedDay: Date
   availableTimes: string[]
 }
@@ -159,7 +159,7 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
   const [bookingSheetIsOpen, setBookingSheetIsOpen] = useState(false)
   const [selectedDay, setSelectedDay] = useState<Date | undefined>()
   const [selectedTime, setSelectedTime] = useState<string | undefined>()
-  const [dayBookings, setDayBookings] = useState<Booking[]>([])
+  const [dayBookings, setDayBookings] = useState<Array<{ date: Date }>>([])
   const [availableTimes, setAvailableTimes] = useState<string[]>([])
   const serviceImageUrl = getServiceImageUrl(service.name, service.imageUrl)
   const maxBookingDate = endOfDay(addWeeks(new Date(), 4))
@@ -256,7 +256,7 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
     }
 
     try {
-      const booking = await createBooking({
+      await createBooking({
         serviceId: service.id,
         barberId: barber.id,
         date: selectedDate,
@@ -267,7 +267,7 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
       setBookingSheetIsOpen(false)
       setSelectedDay(undefined)
       setSelectedTime(undefined)
-      router.push(`/bookings/confirmed?token=${encodeURIComponent(booking.cancellationToken)}`)
+      router.push("/bookings/confirmed")
     } catch (error) {
       console.error(error)
 

@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
-import { cancelBookingByToken } from "@/app/_actions/manage-booking-by-token"
+import { cancelManagedBooking } from "@/app/_actions/manage-booking-by-token"
 import { Button } from "@/app/_components/ui/button"
 import {
   Dialog,
@@ -17,11 +17,10 @@ import {
 } from "@/app/_components/ui/dialog"
 
 interface ConfirmedBookingActionsProps {
-  token: string
   canCancel: boolean
 }
 
-const ConfirmedBookingActions = ({ token, canCancel }: ConfirmedBookingActionsProps) => {
+const ConfirmedBookingActions = ({ canCancel }: ConfirmedBookingActionsProps) => {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -29,7 +28,7 @@ const ConfirmedBookingActions = ({ token, canCancel }: ConfirmedBookingActionsPr
 
   const handleCancel = () => {
     startTransition(async () => {
-      const result = await cancelBookingByToken(token)
+      const result = await cancelManagedBooking()
       if (!result.ok) {
         toast.error(result.message)
         return

@@ -1,5 +1,6 @@
 import Header from "../_components/header"
 import CustomerIdentificationForm from "./_components/customer-identification-form"
+import { resolveSafePath } from "../_lib/safe-redirect"
 
 interface AgendarPageProps {
   searchParams?: {
@@ -8,7 +9,9 @@ interface AgendarPageProps {
 }
 
 const AgendarPage = ({ searchParams }: AgendarPageProps) => {
-  const nextPath = searchParams?.next ?? "/barbers"
+  const nextPath = resolveSafePath(searchParams?.next, {
+    fallback: "/barbers",
+  })
 
   return (
     <>

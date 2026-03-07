@@ -3,20 +3,20 @@
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import Link from "next/link"
-import { FormEvent, useState, useTransition } from "react"
+import { FormEvent, useEffect, useState, useTransition } from "react"
 import { toast } from "sonner"
 import {
-  cancelBookingByToken,
+  cancelManagedBooking,
   confirmCancellationWithoutToken,
-  getPublicBookingByToken,
-  requestCancellationByToken,
+  getManagedPublicBooking,
   requestCancellationWithoutToken,
+  requestManagedCancellation,
+  startPublicBookingSessionWithToken,
 } from "@/app/_actions/manage-booking-by-token"
 import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
 
 interface BookingTokenManagerProps {
-  initialToken?: string
   barbers: Array<{
     id: string
     name: string
@@ -36,8 +36,6 @@ interface PublicBooking {
 
 interface CancellationCandidate {
   id: string
-  customerName: string
-  customerPhone: string
   serviceName: string
   barberName: string | null
   date: Date
@@ -61,7 +59,7 @@ const emptyCancellationRequestForm: CancellationRequestForm = {
 
 const getStatusLabel = (status: string) => {
   if (status === "SCHEDULED") return "Agendado"
-  if (status === "DONE") return "Concluído"
+  if (status === "DONE") return "Concluido"
   if (status === "CANCELED") return "Cancelado"
   return status
 }
@@ -84,8 +82,8 @@ const formatPhone = (value: string) => {
   return digits.replace(/^(\d{2})(\d{5})(\d{4}).*/, "($1) $2-$3")
 }
 
-const BookingTokenManager = ({ initialToken = "", barbers }: BookingTokenManagerProps) => {
-  const [token, setToken] = useState(initialToken)
+const BookingTokenManager = ({ barbers }: BookingTokenManagerProps) => {
+  const [token, setToken] = useState("")
   const [booking, setBooking] = useState<PublicBooking | null>(null)
   const [cancellationForm, setCancellationForm] = useState<CancellationRequestForm>(
     emptyCancellationRequestForm,
@@ -93,43 +91,51 @@ const BookingTokenManager = ({ initialToken = "", barbers }: BookingTokenManager
   const [candidates, setCandidates] = useState<CancellationCandidate[]>([])
   const [isPending, startTransition] = useTransition()
 
+  useEffect(() => {
+    startTransition(async () => {
+      const sessionBooking = await getManagedPublicBooking()
+      setBooking(sessionBooking)
+    })
+  }, [])
+
   const handleSearch = () => {
     startTransition(async () => {
-      const result = await getPublicBookingByToken(token)
-      if (!result) {
+      const session = await startPublicBookingSessionWithToken(token)
+      if (!session.ok) {
         setBooking(null)
-        toast.error("Token inválido")
+        toast.error(session.message)
         return
       }
 
-      setBooking(result)
+      const sessionBooking = await getManagedPublicBooking()
+      setBooking(sessionBooking)
     })
   }
 
   const handleCancel = () => {
     startTransition(async () => {
-      const result = await cancelBookingByToken(token)
+      const result = await cancelManagedBooking()
       if (!result.ok) {
         toast.error(result.message)
         return
       }
 
       toast.success(result.message)
-      const updatedBooking = await getPublicBookingByToken(token)
+      const updatedBooking = await getManagedPublicBooking()
       setBooking(updatedBooking)
     })
   }
 
   const handleRequestCancellation = () => {
     startTransition(async () => {
-      const result = await requestCancellationByToken(token)
+      const result = await requestManagedCancellation()
       if (!result.ok) {
         toast.error(result.message)
         return
       }
 
       toast.success(result.message)
-      const updatedBooking = await getPublicBookingByToken(token)
+      const updatedBooking = await getManagedPublicBooking()
       setBooking(updatedBooking)
     })
   }
@@ -175,14 +181,14 @@ const BookingTokenManager = ({ initialToken = "", barbers }: BookingTokenManager
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5">
         <h1 className="text-xl font-bold md:text-2xl">Gerenciar agendamento</h1>
         <p className="mt-1 text-sm text-zinc-400">
-          Cancelamento rápido com token ou solicitação de cancelamento quando você perdeu o token.
+          Cancelamento rapido com token ou solicitacao de cancelamento quando voce perdeu o token.
         </p>
       </section>
 
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5">
         <h2 className="text-base font-semibold text-zinc-100">Buscar por token</h2>
         <p className="mt-1 text-sm text-zinc-400">
-          Cole o token de cancelamento para cancelar agora ou solicitar cancelamento ao barbeiro.
+          Cole o token para iniciar uma sessao temporaria de gerenciamento.
         </p>
 
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -206,20 +212,23 @@ const BookingTokenManager = ({ initialToken = "", barbers }: BookingTokenManager
                 Telefone: <span className="font-semibold text-zinc-100">{booking.customerPhone}</span>
               </p>
               <p className="text-sm text-zinc-300">
-                Serviço: <span className="font-semibold text-zinc-100">{booking.serviceName}</span>
+                Servico: <span className="font-semibold text-zinc-100">{booking.serviceName}</span>
               </p>
               <p className="text-sm text-zinc-300">
                 Barbeiro: <span className="font-semibold text-zinc-100">{booking.barberName ?? "-"}</span>
               </p>
               <p className="text-sm text-zinc-300">
-                Data: <span className="font-semibold text-zinc-100">{format(new Date(booking.date), "dd/MM/yyyy 'as' HH:mm", { locale: ptBR })}</span>
+                Data:{" "}
+                <span className="font-semibold text-zinc-100">
+                  {format(new Date(booking.date), "dd/MM/yyyy 'as' HH:mm", { locale: ptBR })}
+                </span>
               </p>
               <p className="text-sm text-zinc-300">
                 Status: <span className="font-semibold text-zinc-100">{getStatusLabel(booking.status)}</span>
               </p>
               {booking.cancellationRequested && booking.status === "SCHEDULED" && (
                 <p className="text-sm font-semibold text-amber-300">
-                  Solicitação de cancelamento enviada ao barbeiro.
+                  Solicitacao de cancelamento enviada ao barbeiro.
                 </p>
               )}
             </div>
@@ -230,7 +239,7 @@ const BookingTokenManager = ({ initialToken = "", barbers }: BookingTokenManager
                 onClick={handleCancel}
                 disabled={isPending || booking.status !== "SCHEDULED"}
               >
-                Cancelar agora com token
+                Cancelar agora
               </Button>
               <Button
                 variant="outline"
@@ -255,7 +264,7 @@ const BookingTokenManager = ({ initialToken = "", barbers }: BookingTokenManager
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5">
         <h2 className="text-base font-semibold text-zinc-100">Solicitar cancelamento sem token</h2>
         <p className="mt-1 text-sm text-zinc-400">
-          Se você perdeu o token, informe os dados do agendamento para enviar a solicitação ao barbeiro.
+          Se voce perdeu o token, informe os dados do agendamento para enviar a solicitacao ao barbeiro.
         </p>
 
         <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={handleRequestWithoutToken}>
@@ -335,7 +344,7 @@ const BookingTokenManager = ({ initialToken = "", barbers }: BookingTokenManager
         {candidates.length > 0 && (
           <div className="mt-5 space-y-2 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
             <p className="text-sm font-semibold text-amber-200">
-              Encontramos mais de um agendamento. Confirme qual você deseja cancelar:
+              Encontramos mais de um agendamento. Confirme qual voce deseja cancelar:
             </p>
 
             {candidates.map((candidate) => (
@@ -356,7 +365,7 @@ const BookingTokenManager = ({ initialToken = "", barbers }: BookingTokenManager
                   disabled={isPending}
                   onClick={() => handleConfirmCandidate(candidate.id)}
                 >
-                  Confirmar solicitação
+                  Confirmar solicitacao
                 </Button>
               </div>
             ))}
