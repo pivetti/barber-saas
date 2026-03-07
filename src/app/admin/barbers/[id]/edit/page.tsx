@@ -87,9 +87,12 @@ const EditBarberPage = async ({ params }: EditBarberPageProps) => {
             <Input
               name="imageUrl"
               defaultValue={barber.imageUrl}
-              placeholder="URL da imagem"
+              placeholder="Imagem: joao.png ou /barbers/joao.png"
               className="border-zinc-700/80 bg-zinc-900/85 text-zinc-100 md:col-span-2"
             />
+            <p className="text-xs text-zinc-500 md:col-span-2">
+              Dica: coloque a imagem em `public/barbers` e informe apenas o nome do arquivo.
+            </p>
 
             <div className="mt-2 flex flex-wrap gap-2 md:col-span-2">
               <Button type="submit" className="rounded-xl border border-violet-500/35 bg-violet-500/15 text-violet-100 hover:bg-violet-500/25">

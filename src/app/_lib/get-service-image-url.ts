@@ -6,14 +6,14 @@ const normalizeText = (value: string) =>
     .trim()
 
 const SERVICE_IMAGE_MAP: Record<string, string> = {
-  cabelo: "/cabelo.svg",
-  "corte de cabelo": "/cabelo.svg",
-  barba: "/barba.svg",
-  acabamento: "/acabamento.svg",
-  pezinho: "/acabamento.svg",
-  massagem: "/massagem.svg",
-  sobrancelha: "/sobrancelha.svg",
-  hidratacao: "/hidratacao.svg",
+  cabelo: "/services/cabelo.svg",
+  "corte de cabelo": "/services/cabelo.svg",
+  barba: "/services/barba.svg",
+  acabamento: "/services/acabamento.svg",
+  pezinho: "/services/acabamento.svg",
+  massagem: "/services/massagem.svg",
+  sobrancelha: "/services/sobrancelha.svg",
+  hidratacao: "/services/hidratacao.svg",
 }
 
 export const getServiceImageUrl = (serviceName: string, fallbackUrl: string) => {

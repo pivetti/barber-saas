@@ -5,7 +5,6 @@ import { z } from "zod"
 import { canManageServices } from "@/app/_lib/admin-permissions"
 import {
   idSchema,
-  optionalUrlSchema,
   sanitizeText,
   serviceDescriptionSchema,
 } from "@/app/_lib/input-validation"
@@ -13,6 +12,17 @@ import { db } from "@/app/_lib/prisma"
 import { requireAdmin } from "@/app/_lib/require-admin"
 
 const DEFAULT_SERVICE_IMAGE_URL = "/logo-jesi.png"
+const serviceImageInputSchema = z
+  .string()
+  .transform(sanitizeText)
+  .refine((value) => value.length === 0 || value.length <= 255, "Invalid image path")
+  .refine((value) => !value.includes(".."), "Invalid image path")
+  .refine(
+    (value) => value.length === 0 || /^[a-zA-Z0-9/_\-.:]+$/.test(value),
+    "Invalid image path",
+  )
+  .optional()
+  .transform((value) => (value && value.length > 0 ? value : undefined))
 
 const serviceNameSchema = z.string().transform(sanitizeText).pipe(z.string().min(2).max(80))
 const priceInputSchema = z
@@ -23,13 +33,34 @@ const priceInputSchema = z
 const createServiceSchema = z.object({
   name: serviceNameSchema,
   description: serviceDescriptionSchema,
-  imageUrl: optionalUrlSchema,
+  imageUrl: serviceImageInputSchema,
   price: priceInputSchema,
 })
 
 const updateServiceSchema = createServiceSchema.extend({
   serviceId: idSchema,
 })
+
+const resolveServiceImageUrl = (value?: string) => {
+  if (!value) {
+    return undefined
+  }
+
+  if (/^https?:\/\//i.test(value) || value.startsWith("/")) {
+    return value
+  }
+
+  const normalized = value.replace(/\\/g, "/").replace(/^\.?\/*/, "")
+  if (!normalized) {
+    return undefined
+  }
+
+  if (normalized.startsWith("services/")) {
+    return `/${normalized}`
+  }
+
+  return `/services/${normalized}`
+}
 
 const parsePrice = (value: string) => {
   const price = Number(value)
@@ -65,7 +96,7 @@ export const createAdminService = async (formData: FormData) => {
     data: {
       name: parsed.data.name,
       description: parsed.data.description,
-      imageUrl: parsed.data.imageUrl ?? DEFAULT_SERVICE_IMAGE_URL,
+      imageUrl: resolveServiceImageUrl(parsed.data.imageUrl) ?? DEFAULT_SERVICE_IMAGE_URL,
       price,
     },
   })
@@ -102,7 +133,7 @@ export const updateAdminService = async (formData: FormData) => {
     data: {
       name: parsed.data.name,
       description: parsed.data.description,
-      imageUrl: parsed.data.imageUrl ?? DEFAULT_SERVICE_IMAGE_URL,
+      imageUrl: resolveServiceImageUrl(parsed.data.imageUrl) ?? DEFAULT_SERVICE_IMAGE_URL,
       price,
     },
   })

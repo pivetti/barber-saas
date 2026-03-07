@@ -53,9 +53,12 @@ const ServicesAdminPage = async () => {
               />
               <Input
                 name="imageUrl"
-                placeholder="URL da imagem (opcional)"
+                placeholder="Imagem: corte.png ou /services/corte.png (opcional)"
                 className="border-zinc-700/80 bg-zinc-900/85 text-zinc-100 md:col-span-2"
               />
+              <p className="text-xs text-zinc-500 md:col-span-2">
+                Dica: coloque a imagem em `public/services` e informe apenas o nome do arquivo.
+              </p>
               <Button
                 type="submit"
                 className="md:col-span-2 md:w-fit rounded-xl border border-violet-500/35 bg-violet-500/15 text-violet-100 hover:bg-violet-500/25"
@@ -96,6 +99,7 @@ const ServicesAdminPage = async () => {
                   <Input
                     name="imageUrl"
                     defaultValue={service.imageUrl}
+                    placeholder="Imagem: corte.png ou /services/corte.png"
                     className="border-zinc-700/80 bg-zinc-900/85 text-zinc-100 md:col-span-2"
                   />
                 </div>

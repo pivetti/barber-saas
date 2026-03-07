@@ -44,7 +44,7 @@ const AdminMobileMenu = ({ adminName, links }: AdminMobileMenuProps) => {
           type="button"
           variant="outline"
           size="icon"
-          className="h-10 w-10 rounded-xl border-zinc-800 bg-zinc-900/80 text-zinc-100 md:hidden"
+          className="h-10 w-10 rounded-xl border-zinc-800 bg-zinc-900/80 text-zinc-100"
         >
           <MenuIcon className="h-5 w-5" />
           <span className="sr-only">Abrir menu admin</span>

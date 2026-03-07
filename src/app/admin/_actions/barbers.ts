@@ -15,7 +15,6 @@ import {
   emailSchema,
   idSchema,
   nameSchema,
-  optionalUrlSchema,
   passwordSchema,
   phoneSchema,
   sanitizeText,
@@ -24,6 +23,18 @@ import { db } from "@/app/_lib/prisma"
 import { requireAdmin } from "@/app/_lib/require-admin"
 
 const BARBER_DEFAULT_IMAGE_URL = "/logo-jesi.png"
+const barberImageInputSchema = z
+  .string()
+  .transform(sanitizeText)
+  .refine((value) => value.length === 0 || value.length <= 255, "Invalid image path")
+  .refine((value) => !value.includes(".."), "Invalid image path")
+  .refine(
+    (value) => value.length === 0 || /^[a-zA-Z0-9/_\-.:]+$/.test(value),
+    "Invalid image path",
+  )
+  .optional()
+  .transform((value) => (value && value.length > 0 ? value : undefined))
+
 const optionalPhoneSchema = z
   .string()
   .transform((value) => value.trim())
@@ -36,7 +47,7 @@ const createBarberSchema = z.object({
   email: emailSchema,
   phone: optionalPhoneSchema,
   password: passwordSchema,
-  imageUrl: optionalUrlSchema,
+  imageUrl: barberImageInputSchema,
   role: z.enum(["ADMIN", "BARBER"]),
 })
 
@@ -50,7 +61,7 @@ const updateBarberSchema = z.object({
     .transform((value) => value.trim())
     .transform((value) => (value.length > 0 ? value : undefined))
     .pipe(passwordSchema.optional()),
-  imageUrl: optionalUrlSchema,
+  imageUrl: barberImageInputSchema,
 })
 
 const changeRoleSchema = z.object({
@@ -61,6 +72,27 @@ const changeRoleSchema = z.object({
 const normalizePhone = (value: string) => {
   const digits = value.replace(/\D/g, "").trim()
   return digits.length > 0 ? digits : null
+}
+
+const resolveBarberImageUrl = (value?: string) => {
+  if (!value) {
+    return undefined
+  }
+
+  if (/^https?:\/\//i.test(value) || value.startsWith("/")) {
+    return value
+  }
+
+  const normalized = value.replace(/\\/g, "/").replace(/^\.?\/*/, "")
+  if (!normalized) {
+    return undefined
+  }
+
+  if (normalized.startsWith("barbers/")) {
+    return `/${normalized}`
+  }
+
+  return `/barbers/${normalized}`
 }
 
 const revalidateBarberPages = () => {
@@ -103,7 +135,7 @@ export const createBarber = async (formData: FormData) => {
         email: parsed.data.email,
         phone: normalizePhone(parsed.data.phone ?? ""),
         password: passwordHash,
-        imageUrl: parsed.data.imageUrl ?? BARBER_DEFAULT_IMAGE_URL,
+        imageUrl: resolveBarberImageUrl(parsed.data.imageUrl) ?? BARBER_DEFAULT_IMAGE_URL,
         role: parsed.data.role,
         isActive: true,
       },
@@ -157,7 +189,7 @@ export const updateBarber = async (formData: FormData) => {
     name: parsed.data.name,
     email: parsed.data.email,
     phone: normalizePhone(parsed.data.phone ?? ""),
-    imageUrl: parsed.data.imageUrl ?? BARBER_DEFAULT_IMAGE_URL,
+    imageUrl: resolveBarberImageUrl(parsed.data.imageUrl) ?? BARBER_DEFAULT_IMAGE_URL,
   }
 
   if (parsed.data.password) {

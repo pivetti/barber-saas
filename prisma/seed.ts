@@ -11,7 +11,6 @@ const seedEnvSchema = z.object({
   ADMIN_EMAIL: z.string().email("ADMIN_EMAIL must be a valid email"),
   ADMIN_PASSWORD: z.string().min(1, "ADMIN_PASSWORD is required"),
   ADMIN_ROLE: z.enum(["OWNER", "ADMIN"]).optional(),
-  SEED_DEMO_PASSWORD: z.string().min(1).optional(),
   ADMIN_NAME: z.string().min(1).optional(),
   ADMIN_PHONE: z.string().min(1).optional(),
   ADMIN_IMAGE_URL: z.string().url().optional(),
@@ -37,31 +36,19 @@ async function upsertServices() {
       name: "Corte",
       description: "Corte classico e moderno com acabamento profissional.",
       price: new Prisma.Decimal(50.0),
-      imageUrl: "https://utfs.io/f/0ddfbd26-a424-43a0-aaf3-c3f1dc6be6d1-1kgxo7.png",
+      imageUrl: "/services/cabelo.svg",
     },
     {
       name: "Barba",
       description: "Modelagem completa para um visual alinhado.",
       price: new Prisma.Decimal(35.0),
-      imageUrl: "https://utfs.io/f/e6bdffb6-24a9-455b-aba3-903c2c2b5bde-1jo6tu.png",
-    },
-    {
-      name: "Pezinho",
-      description: "Acabamento lateral e nuca para manter o corte em dia.",
-      price: new Prisma.Decimal(35.0),
-      imageUrl: "https://utfs.io/f/8a457cda-f768-411d-a737-cdb23ca6b9b5-b3pegf.png",
-    },
-    {
-      name: "Sobrancelha",
-      description: "Valoriza a expressao e simetria.",
-      price: new Prisma.Decimal(20.0),
-      imageUrl: "https://utfs.io/f/2118f76e-89e4-43e6-87c9-8f157500c333-b0ps0b.png",
+      imageUrl: "/services/barba.svg",
     },
     {
       name: "Hidratacao",
       description: "Tratamento rapido para fios mais saudaveis.",
       price: new Prisma.Decimal(30.0),
-      imageUrl: "https://utfs.io/f/8a457cda-f768-411d-a737-cdb23ca6b9b5-b3pegf.png",
+      imageUrl: "/service/hidratacao.svg",
     },
   ]
 
@@ -87,12 +74,12 @@ async function upsertServices() {
 async function createInitialAdminBarber(env: SeedEnv) {
   const adminEmail = env.ADMIN_EMAIL.toLowerCase()
   const adminPassword = env.ADMIN_PASSWORD
-  const adminName = env.ADMIN_NAME?.trim() || "Jesi"
+  const adminName = env.ADMIN_NAME?.trim() || "Goku"
   const adminPhone = env.ADMIN_PHONE?.trim() || null
   const adminRole = env.ADMIN_ROLE ?? "OWNER"
   const adminImageUrl =
     env.ADMIN_IMAGE_URL?.trim() ||
-    "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&w=500&q=80"
+    "/barbers/goku.jpg"
 
   const existing = await prisma.barber.findUnique({
     where: { email: adminEmail },
@@ -137,27 +124,6 @@ async function seedDatabase() {
       await prisma.barberBlockedDay.deleteMany({})
       await prisma.barberAvailability.deleteMany({})
       await prisma.booking.deleteMany({})
-      await prisma.user.deleteMany({})
-
-      const demoPassword = env.SEED_DEMO_PASSWORD ?? env.ADMIN_PASSWORD
-      const passwordHash = await bcrypt.hash(demoPassword, 12)
-
-      const users = await prisma.$transaction([
-        prisma.user.create({
-          data: {
-            name: "Henrique Pivetti",
-            phone: "5511991111111",
-            password: passwordHash,
-          },
-        }),
-        prisma.user.create({
-          data: {
-            name: "Joao Silva",
-            phone: "5511992222222",
-            password: passwordHash,
-          },
-        }),
-      ])
 
       const services = await prisma.service.findMany({
         orderBy: { name: "asc" },
@@ -200,22 +166,20 @@ async function seedDatabase() {
         await prisma.booking.createMany({
           data: [
             {
-              userId: users[0].id,
               serviceId: services[0].id,
               barberId: barbers[0].id,
               date: new Date(Date.now() + 24 * 60 * 60 * 1000),
-              customerName: users[0].name,
-              customerPhone: users[0].phone,
+              customerName: "Henrique Pivetti",
+              customerPhone: "5511991111111",
               cancellationToken: `ct_${randomBytes(16).toString("hex")}`,
               status: "SCHEDULED",
             },
             {
-              userId: users[1].id,
               serviceId: services[1].id,
               barberId: barbers[1].id,
               date: new Date(Date.now() - 24 * 60 * 60 * 1000),
-              customerName: users[1].name,
-              customerPhone: users[1].phone,
+              customerName: "Joao Silva",
+              customerPhone: "5511992222222",
               cancellationToken: `ct_${randomBytes(16).toString("hex")}`,
               status: "DONE",
             },

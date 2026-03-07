@@ -49,9 +49,12 @@ const NewBarberPage = async () => {
             />
             <Input
               name="imageUrl"
-              placeholder="URL da imagem (opcional)"
+              placeholder="Imagem: joao.png ou /barbers/joao.png (opcional)"
               className="border-zinc-700/80 bg-zinc-900/85 text-zinc-100 md:col-span-2"
             />
+            <p className="text-xs text-zinc-500 md:col-span-2">
+              Dica: coloque a imagem em `public/barbers` e informe apenas o nome do arquivo.
+            </p>
 
             <label className="text-sm text-zinc-300 md:col-span-2">
               Perfil
