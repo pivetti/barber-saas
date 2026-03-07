@@ -19,7 +19,7 @@ Público-alvo:
 - clientes que querem agendar online com rapidez
 - barbearias que precisam centralizar operação e agenda
 
-## ✨ Funcionalidades
+## ⚙️ Funcionalidades
 - Fluxo de agendamento para cliente (`/agendar` → `/barbers` → serviços/horário)
 - Confirmação de agendamento com token de cancelamento
 - Página de gerenciamento de agendamento por token (`/bookings`)
