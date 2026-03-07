@@ -40,7 +40,7 @@ const AdminLoginForm = ({ nextPath }: AdminLoginFormProps) => {
       const data = (await response.json()) as ApiErrorResponse
 
       if (!response.ok) {
-        setErrorMessage(data.error ?? "Não foi possível fazer login")
+        setErrorMessage(data.error ?? "Nao foi possivel fazer login")
         return
       }
 
@@ -61,6 +61,7 @@ const AdminLoginForm = ({ nextPath }: AdminLoginFormProps) => {
         value={email}
         onChange={(event) => setEmail(event.target.value)}
         required
+        className="border-zinc-700/80 bg-zinc-900/85 text-zinc-100"
       />
       <Input
         type="password"
@@ -68,11 +69,18 @@ const AdminLoginForm = ({ nextPath }: AdminLoginFormProps) => {
         value={password}
         onChange={(event) => setPassword(event.target.value)}
         required
+        className="border-zinc-700/80 bg-zinc-900/85 text-zinc-100"
       />
 
-      {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
+      {errorMessage && (
+        <p className="rounded-xl border border-red-500/25 bg-red-500/10 px-3 py-2 text-sm text-red-300">{errorMessage}</p>
+      )}
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <Button
+        type="submit"
+        className="h-11 w-full rounded-xl border border-violet-500/35 bg-violet-500/15 text-violet-100 hover:bg-violet-500/25"
+        disabled={isSubmitting}
+      >
         {isSubmitting ? "Entrando..." : "Entrar no painel"}
       </Button>
     </form>

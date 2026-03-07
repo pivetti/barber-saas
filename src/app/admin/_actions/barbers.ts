@@ -143,6 +143,9 @@ export const updateBarber = async (formData: FormData) => {
 
   if (parsed.data.password) {
     data.password = await bcrypt.hash(parsed.data.password, 12)
+    data.sessionVersion = {
+      increment: 1,
+    }
   }
 
   try {

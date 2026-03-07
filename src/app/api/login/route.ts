@@ -1,6 +1,11 @@
 import bcrypt from "bcrypt"
 import { NextResponse } from "next/server"
-import { AUTH_COOKIE_NAME, authCookieOptions, signAuthToken } from "@/app/_lib/auth"
+import {
+  AUTH_COOKIE_NAME,
+  AUTH_REFRESH_WINDOW_SECONDS,
+  authCookieOptions,
+  signAuthToken,
+} from "@/app/_lib/auth"
 import { db } from "@/app/_lib/prisma"
 
 interface LoginBody {
@@ -28,6 +33,7 @@ export async function POST(request: Request) {
         name: true,
         phone: true,
         password: true,
+        sessionVersion: true,
       },
     })
 
@@ -41,10 +47,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "invalid credentials" }, { status: 401 })
     }
 
+    const nowInSeconds = Math.floor(Date.now() / 1000)
     const token = signAuthToken({
       sub: user.id,
       name: user.name,
       phone: user.phone,
+      sessionVersion: user.sessionVersion,
+      refreshUntil: nowInSeconds + AUTH_REFRESH_WINDOW_SECONDS,
     })
 
     const response = NextResponse.json(

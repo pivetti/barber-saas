@@ -15,7 +15,7 @@ interface DashboardPageProps {
 
 const statusLabelMap: Record<string, string> = {
   SCHEDULED: "Agendado",
-  DONE: "Concluído",
+  DONE: "Concluido",
   CANCELED: "Cancelado",
 }
 
@@ -29,18 +29,18 @@ const getStatusLabel = (status: string, cancellationRequested: boolean) => {
 
 const getStatusClassName = (status: string, cancellationRequested: boolean) => {
   if (cancellationRequested && status === "SCHEDULED") {
-    return "border-amber-500/40 bg-amber-500/15 text-amber-300"
+    return "border-amber-500/35 bg-amber-500/14 text-amber-300"
   }
 
   if (status === "DONE") {
-    return "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+    return "border-emerald-500/35 bg-emerald-500/14 text-emerald-300"
   }
 
   if (status === "CANCELED") {
-    return "border-red-500/40 bg-red-500/15 text-red-300"
+    return "border-red-500/35 bg-red-500/14 text-red-300"
   }
 
-  return "border-violet-500/40 bg-violet-500/15 text-violet-200"
+  return "border-violet-500/40 bg-violet-500/16 text-violet-100"
 }
 
 const getSelectedDate = (dateParam?: string) => {
@@ -87,113 +87,114 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     <>
       <AdminHeader adminName={admin.name} adminRole={admin.role} />
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-        <section className="rounded-3xl border border-zinc-800/80 bg-gradient-to-b from-zinc-900/95 to-zinc-950/85 p-5 shadow-[0_20px_45px_rgba(0,0,0,0.35)] sm:p-6">
+      <main className="mx-auto w-full max-w-6xl px-4 py-7 sm:px-6 sm:py-8">
+        <section className="rounded-3xl border border-zinc-800/60 bg-[radial-gradient(circle_at_top,rgba(167,139,250,0.12),transparent_42%),linear-gradient(to_bottom,rgba(24,24,27,0.96),rgba(9,9,11,0.92))] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.34)] sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-300/80">
-                Painel
-              </p>
-              <h1 className="text-2xl font-bold leading-tight text-zinc-100 md:text-3xl">
-                Agenda
-              </h1>
-              <p className="max-w-xl text-sm leading-relaxed text-zinc-400">
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-300/75">Painel</p>
+              <h1 className="text-2xl font-semibold leading-tight text-zinc-50 md:text-3xl">Agenda</h1>
+              <p className="max-w-xl text-sm leading-relaxed text-zinc-400/95">
                 Visualize e acompanhe os agendamentos por dia com mais clareza.
               </p>
             </div>
           </div>
 
-          <div className="mt-5 flex flex-nowrap items-center justify-center gap-2 overflow-x-auto rounded-2xl border border-zinc-800/90 bg-zinc-950/70 p-2.5 sm:gap-3">
-            <Link
-              href={`/admin/dashboard?date=${format(previousDate, "yyyy-MM-dd")}`}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm font-semibold text-zinc-200 transition-all hover:border-violet-500/40 hover:bg-zinc-800 hover:text-zinc-100"
-              aria-label="Dia anterior"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Link>
-
-            <div className="inline-flex h-10 shrink-0 items-center rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-sm font-semibold text-zinc-100 sm:px-4">
-              <span className={cn("capitalize", !isToday(selectedDate) && "text-zinc-200")}>
-                {selectedDateLabel}
-              </span>
-            </div>
-
-            {!isSameDay(selectedDate, today) && (
+          <div className="mt-5 flex items-center justify-center rounded-2xl border border-zinc-800/60 bg-zinc-950/55 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+            <div className="flex w-full max-w-md items-center justify-center gap-1.5 sm:gap-2">
               <Link
-                href="/admin/dashboard"
-                className="inline-flex h-10 shrink-0 items-center justify-center rounded-xl border border-violet-500/35 bg-violet-500/10 px-4 text-sm font-semibold text-violet-100 transition-all hover:bg-violet-500/20"
+                href={`/admin/dashboard?date=${format(previousDate, "yyyy-MM-dd")}`}
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-700/80 bg-zinc-900/85 text-sm font-semibold text-zinc-200 transition-all hover:border-violet-500/40 hover:bg-zinc-800 hover:text-zinc-100 sm:h-10 sm:w-10"
+                aria-label="Dia anterior"
               >
-                Hoje
+                <ChevronLeft className="h-4 w-4" />
               </Link>
-            )}
 
-            <Link
-              href={`/admin/dashboard?date=${format(nextDate, "yyyy-MM-dd")}`}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm font-semibold text-zinc-200 transition-all hover:border-violet-500/40 hover:bg-zinc-800 hover:text-zinc-100"
-              aria-label="Próximo dia"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Link>
+              <div className="inline-flex h-9 min-w-[132px] items-center justify-center rounded-xl border border-zinc-700/80 bg-zinc-900/85 px-3 text-sm font-semibold text-zinc-100 sm:h-10 sm:min-w-[152px] sm:px-4">
+                <span className={cn("capitalize", !isToday(selectedDate) && "text-zinc-200")}>{selectedDateLabel}</span>
+              </div>
+
+              {!isSameDay(selectedDate, today) && (
+                <Link
+                  href="/admin/dashboard"
+                  className="inline-flex h-9 shrink-0 items-center justify-center rounded-xl border border-violet-500/35 bg-violet-500/15 px-3 text-xs font-semibold text-violet-100 transition-all hover:bg-violet-500/25 sm:h-10 sm:px-4 sm:text-sm"
+                >
+                  Hoje
+                </Link>
+              )}
+
+              <Link
+                href={`/admin/dashboard?date=${format(nextDate, "yyyy-MM-dd")}`}
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-700/80 bg-zinc-900/85 text-sm font-semibold text-zinc-200 transition-all hover:border-violet-500/40 hover:bg-zinc-800 hover:text-zinc-100 sm:h-10 sm:w-10"
+                aria-label="Proximo dia"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </section>
 
-        <section className="mt-6 rounded-3xl border border-zinc-800/80 bg-zinc-950/55 p-3 sm:p-4">
+        <section className="mt-5 rounded-3xl border border-zinc-800/65 bg-zinc-950/45 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.24)] sm:mt-6 sm:p-4">
           {bookings.length === 0 ? (
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/55 px-4 py-12 text-center">
+            <div className="rounded-2xl border border-zinc-800/70 bg-gradient-to-b from-zinc-900/85 to-zinc-950/80 px-4 py-12 text-center">
               <p className="text-sm font-medium text-zinc-300">Nenhum agendamento para esta data.</p>
               <p className="mt-1 text-xs text-zinc-500">Use os botoes acima para navegar entre os dias.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {bookings.map((booking) => (
-              <article
-                key={booking.id}
-                className="rounded-2xl border border-zinc-800/90 bg-gradient-to-b from-zinc-900/90 to-zinc-950/80 px-3 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.25)] transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-500/30 hover:shadow-[0_14px_30px_rgba(0,0,0,0.32)]"
-              >
-                <div className="flex h-full flex-col gap-3">
-                  <div className="flex items-start justify-between gap-3 md:min-h-[52px]">
-                    <p className="shrink-0 text-2xl font-bold leading-none text-violet-200">
-                      {format(booking.date, "HH:mm")}
-                    </p>
-
-                    <span
-                      title={getStatusLabel(booking.status, booking.cancellationRequested)}
-                      className={cn(
-                        "inline-flex shrink-0 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]",
-                        "max-w-[150px] items-center justify-center text-center leading-tight",
-                        getStatusClassName(booking.status, booking.cancellationRequested),
-                        booking.cancellationRequested && booking.status === "SCHEDULED"
-                          ? "text-[9px] whitespace-normal"
-                          : "whitespace-nowrap",
-                      )}
-                    >
-                      {getStatusLabel(booking.status, booking.cancellationRequested)}
-                    </span>
-                  </div>
-
-                  <div className="flex items-end justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-zinc-100 md:text-base">
-                        {booking.customerName}
+                <article
+                  key={booking.id}
+                  className="rounded-2xl border border-zinc-800/70 bg-gradient-to-b from-zinc-900/80 to-zinc-950/75 p-3.5 shadow-[0_10px_22px_rgba(0,0,0,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-500/30 hover:shadow-[0_16px_30px_rgba(0,0,0,0.28)]"
+                >
+                  <div className="flex h-full flex-col gap-3.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="inline-flex h-10 min-w-[76px] shrink-0 items-center justify-center rounded-xl border border-violet-500/30 bg-violet-500/10 px-2 text-lg font-semibold leading-none text-violet-100">
+                        {format(booking.date, "HH:mm")}
                       </p>
-                      <p className="truncate text-xs font-medium text-zinc-300 md:text-sm">
-                        {booking.service.name}
-                      </p>
+
+                      <span
+                        title={getStatusLabel(booking.status, booking.cancellationRequested)}
+                        className={cn(
+                          "inline-flex shrink-0 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]",
+                          "max-w-[150px] items-center justify-center text-center leading-tight",
+                          "shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]",
+                          getStatusClassName(booking.status, booking.cancellationRequested),
+                          booking.cancellationRequested && booking.status === "SCHEDULED"
+                            ? "text-[9px] whitespace-normal"
+                            : "whitespace-nowrap",
+                        )}
+                      >
+                        {getStatusLabel(booking.status, booking.cancellationRequested)}
+                      </span>
                     </div>
 
-                    <Link
-                      href={`/admin/bookings/${booking.id}`}
-                      className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg border border-violet-500/35 bg-violet-500/10 px-4 text-xs font-semibold text-violet-100 transition-colors hover:bg-violet-500/20"
-                    >
-                      Editar
-                    </Link>
+                    <div className="flex items-end justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-base font-semibold tracking-tight text-zinc-100">
+                          {booking.customerName}
+                        </p>
+                        <p className="mt-0.5 truncate text-sm font-medium text-zinc-300/95">
+                          {booking.service.name}
+                        </p>
+                      </div>
+
+                      <Link
+                        href={`/admin/bookings/${booking.id}`}
+                        className="inline-flex h-9 shrink-0 items-center justify-center rounded-xl border border-violet-500/35 bg-violet-500/12 px-3 text-xs font-semibold text-violet-100 transition-colors hover:bg-violet-500/25"
+                      >
+                        Editar
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              </article>
+                </article>
               ))}
             </div>
           )}
         </section>
+
+        <footer className="mt-5 rounded-2xl border border-zinc-800/55 bg-zinc-950/35 px-4 py-3 text-xs text-zinc-500 sm:mt-6">
+          Agenda atualizada em tempo real conforme novos agendamentos e alteracoes de status.
+        </footer>
       </main>
     </>
   )

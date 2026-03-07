@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 const ADMIN_AUTH_COOKIE_NAME = "admin_auth_token"
+const ADMIN_AUTH_EXPIRES_IN_SECONDS = 60 * 15
+const ADMIN_AUTH_RENEW_BEFORE_EXPIRY_SECONDS = 60 * 5
 
 const encoder = new TextEncoder()
 
@@ -22,6 +24,21 @@ const base64UrlToUint8Array = (value: string) => {
 const decodePayload = (value: string) => {
   const bytes = base64UrlToUint8Array(value)
   return new TextDecoder().decode(bytes)
+}
+
+const uint8ArrayToBase64Url = (value: Uint8Array) => {
+  let binary = ""
+
+  for (const byte of value) {
+    binary += String.fromCharCode(byte)
+  }
+
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
+}
+
+const encodeJsonToBase64Url = (value: unknown) => {
+  const json = JSON.stringify(value)
+  return uint8ArrayToBase64Url(encoder.encode(json))
 }
 
 const verifyJwt = async (token: string, secret: string) => {
@@ -57,6 +74,24 @@ const verifyJwt = async (token: string, secret: string) => {
   }
 
   return parsedPayload
+}
+
+const signJwt = async (payload: Record<string, unknown>, secret: string) => {
+  const header = encodeJsonToBase64Url({ alg: "HS256", typ: "JWT" })
+  const body = encodeJsonToBase64Url(payload)
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  )
+
+  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(`${header}.${body}`))
+  const encodedSignature = uint8ArrayToBase64Url(new Uint8Array(signature))
+
+  return `${header}.${body}.${encodedSignature}`
 }
 
 export async function middleware(request: NextRequest) {
@@ -97,7 +132,37 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/admin/dashboard", request.url))
   }
 
-  return NextResponse.next()
+  const nowInSeconds = Math.floor(Date.now() / 1000)
+  const exp = typeof payload.exp === "number" ? payload.exp : 0
+  const refreshUntil = typeof payload.refreshUntil === "number" ? payload.refreshUntil : 0
+  const shouldRenew =
+    exp > 0 &&
+    refreshUntil > nowInSeconds &&
+    exp - nowInSeconds <= ADMIN_AUTH_RENEW_BEFORE_EXPIRY_SECONDS
+
+  if (!shouldRenew) {
+    return NextResponse.next()
+  }
+
+  const renewedToken = await signJwt(
+    {
+      ...payload,
+      iat: nowInSeconds,
+      exp: nowInSeconds + ADMIN_AUTH_EXPIRES_IN_SECONDS,
+    },
+    jwtSecret,
+  )
+
+  const response = NextResponse.next()
+  response.cookies.set(ADMIN_AUTH_COOKIE_NAME, renewedToken, {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: request.nextUrl.protocol === "https:",
+    path: "/",
+    maxAge: ADMIN_AUTH_EXPIRES_IN_SECONDS,
+  })
+
+  return response
 }
 
 export const config = {

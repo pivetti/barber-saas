@@ -24,6 +24,7 @@ model User {
   name      String   @unique
   phone     String
   password  String
+  sessionVersion Int @default(0)
   bookings  Booking[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -44,6 +45,7 @@ model Barber {
   email           String?             @unique
   phone           String?             @unique
   password        String?
+  sessionVersion  Int                 @default(0)
   imageUrl        String
   role            BarberRole          @default(BARBER)
   isActive        Boolean             @default(true)
@@ -155,4 +157,19 @@ model ScheduleSettings {
   updatedAt           DateTime @updatedAt @map("updated_at")
 
   @@map("schedule_settings")
+}
+
+model AdminLoginAttempt {
+  id              String   @id @default(uuid())
+  email           String
+  ipAddress       String
+  failedAttempts  Int      @default(0)
+  windowStartedAt DateTime
+  blockedUntil    DateTime?
+  lastAttemptAt   DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([email, ipAddress])
+  @@index([blockedUntil])
 }

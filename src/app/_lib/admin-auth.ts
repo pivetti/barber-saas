@@ -5,8 +5,10 @@ import { getAppEnv } from "./env"
 import { db } from "./prisma"
 
 export const ADMIN_AUTH_COOKIE_NAME = "admin_auth_token"
-const ADMIN_AUTH_EXPIRES_IN = "7d"
-const ADMIN_AUTH_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7
+export const ADMIN_AUTH_EXPIRES_IN_SECONDS = 60 * 15
+export const ADMIN_AUTH_COOKIE_MAX_AGE_SECONDS = ADMIN_AUTH_EXPIRES_IN_SECONDS
+export const ADMIN_AUTH_RENEW_BEFORE_EXPIRY_SECONDS = 60 * 5
+export const ADMIN_AUTH_REFRESH_WINDOW_SECONDS = 60 * 60 * 8
 
 export interface AdminAuthTokenPayload extends JwtPayload {
   sub: string
@@ -14,6 +16,8 @@ export interface AdminAuthTokenPayload extends JwtPayload {
   phone?: string | null
   email?: string | null
   role: BarberRole
+  sessionVersion: number
+  refreshUntil: number
 }
 
 export interface AdminAuthUser {
@@ -31,7 +35,7 @@ const getJwtSecret = () => {
 
 export const signAdminAuthToken = (payload: AdminAuthTokenPayload) => {
   return jwt.sign(payload, getJwtSecret(), {
-    expiresIn: ADMIN_AUTH_EXPIRES_IN,
+    expiresIn: ADMIN_AUTH_EXPIRES_IN_SECONDS,
   })
 }
 
@@ -48,6 +52,13 @@ export const verifyAdminAuthToken = (token: string): AdminAuthTokenPayload | nul
     }
 
     if (!decoded.role) {
+      return null
+    }
+
+    if (
+      typeof decoded.sessionVersion !== "number" ||
+      typeof decoded.refreshUntil !== "number"
+    ) {
       return null
     }
 
@@ -80,10 +91,15 @@ export const getAdminFromToken = async (): Promise<AdminAuthUser | null> => {
       password: true,
       role: true,
       isActive: true,
+      sessionVersion: true,
     },
   })
 
-  if (!barber?.password || !barber.isActive) {
+  if (
+    !barber?.password ||
+    !barber.isActive ||
+    barber.sessionVersion !== payload.sessionVersion
+  ) {
     return null
   }
 
@@ -95,6 +111,17 @@ export const getAdminFromToken = async (): Promise<AdminAuthUser | null> => {
     role: barber.role,
     isActive: barber.isActive,
   }
+}
+
+export const shouldRenewAdminAuthToken = (payload: AdminAuthTokenPayload) => {
+  const nowInSeconds = Math.floor(Date.now() / 1000)
+
+  if (!payload.exp || payload.refreshUntil <= nowInSeconds) {
+    return false
+  }
+
+  const remainingLifetime = payload.exp - nowInSeconds
+  return remainingLifetime <= ADMIN_AUTH_RENEW_BEFORE_EXPIRY_SECONDS
 }
 
 export const adminAuthCookieOptions = {
