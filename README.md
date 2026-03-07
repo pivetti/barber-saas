@@ -127,14 +127,6 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 - serviços em `/admin/services` (OWNER/ADMIN)
 - barbeiros em `/admin/barbers` (OWNER/ADMIN)
 
-## 🖼️ Screenshots
-Você pode inserir capturas aqui:
-
-- `docs/screenshots/home.png` (Home)
-- `docs/screenshots/agendamento.png` (Fluxo de agendamento)
-- `docs/screenshots/admin-dashboard.png` (Painel administrativo)
-- `docs/screenshots/admin-barbers.png` (Gestão de barbeiros)
-
 ## 🗺️ Roadmap
 - [ ] Notificações automáticas (WhatsApp/e-mail)
 - [ ] Histórico avançado e relatórios de performance
