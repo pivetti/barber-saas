@@ -2,17 +2,29 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { requireAdmin } from "@/app/_lib/require-admin"
+import { z } from "zod"
+import { canManageBookings, mustUseOwnDataScope } from "@/app/_lib/admin-permissions"
+import { AppBarberRole } from "@/app/_lib/admin-role"
+import {
+  adminReturnToSchema,
+  customerNameSchema,
+  dateInputSchema,
+  idSchema,
+  phoneSchema,
+  sanitizeText,
+  timeInputSchema,
+} from "@/app/_lib/input-validation"
 import { db } from "@/app/_lib/prisma"
+import { requireAdmin } from "@/app/_lib/require-admin"
 
 const editableBookingFields = ["client", "service", "time", "date"] as const
-type EditableBookingField = (typeof editableBookingFields)[number]
+const editableBookingFieldSchema = z.enum(editableBookingFields)
 
-const getBookingByIdForAdmin = async (bookingId: string, adminId: string) => {
+const getBookingByIdForAdmin = async (bookingId: string, adminId: string, adminRole: AppBarberRole) => {
   return db.booking.findFirst({
     where: {
       id: bookingId,
-      barberId: adminId,
+      ...(mustUseOwnDataScope(adminRole) ? { barberId: adminId } : {}),
     },
     select: {
       id: true,
@@ -28,26 +40,42 @@ const revalidateAdminBookingPaths = (bookingId: string) => {
   revalidatePath("/bookings")
 }
 
-const isEditableBookingField = (field: string): field is EditableBookingField => {
-  return editableBookingFields.includes(field as EditableBookingField)
+const parseActionBasePayload = (formData: FormData) => {
+  return z
+    .object({
+      bookingId: idSchema,
+      returnTo: adminReturnToSchema,
+    })
+    .safeParse({
+      bookingId: String(formData.get("bookingId") ?? ""),
+      returnTo: String(formData.get("returnTo") ?? ""),
+    })
+}
+
+const parseDateFromInput = (value: string) => {
+  const [year, month, day] = value.split("-").map(Number)
+  const date = new Date(year, month - 1, day, 0, 0, 0, 0)
+  return Number.isNaN(date.getTime()) ? null : date
 }
 
 export const cancelAdminBooking = async (formData: FormData) => {
   const admin = await requireAdmin()
-  const bookingId = String(formData.get("bookingId") ?? "")
-  const returnTo = String(formData.get("returnTo") ?? "")
+  if (!canManageBookings(admin.role)) {
+    throw new Error("Not authorized to manage bookings")
+  }
 
-  if (!bookingId) {
+  const parsed = parseActionBasePayload(formData)
+  if (!parsed.success) {
     return
   }
 
-  const booking = await getBookingByIdForAdmin(bookingId, admin.id)
+  const booking = await getBookingByIdForAdmin(parsed.data.bookingId, admin.id, admin.role)
   if (!booking) {
     return
   }
 
   await db.booking.update({
-    where: { id: bookingId },
+    where: { id: parsed.data.bookingId },
     data: {
       status: "CANCELED",
       cancellationRequested: false,
@@ -55,29 +83,31 @@ export const cancelAdminBooking = async (formData: FormData) => {
     },
   })
 
-  revalidateAdminBookingPaths(bookingId)
+  revalidateAdminBookingPaths(parsed.data.bookingId)
 
-  if (returnTo) {
-    redirect(returnTo)
+  if (parsed.data.returnTo) {
+    redirect(parsed.data.returnTo)
   }
 }
 
 export const concludeAdminBooking = async (formData: FormData) => {
   const admin = await requireAdmin()
-  const bookingId = String(formData.get("bookingId") ?? "")
-  const returnTo = String(formData.get("returnTo") ?? "")
+  if (!canManageBookings(admin.role)) {
+    throw new Error("Not authorized to manage bookings")
+  }
 
-  if (!bookingId) {
+  const parsed = parseActionBasePayload(formData)
+  if (!parsed.success) {
     return
   }
 
-  const booking = await getBookingByIdForAdmin(bookingId, admin.id)
+  const booking = await getBookingByIdForAdmin(parsed.data.bookingId, admin.id, admin.role)
   if (!booking) {
     return
   }
 
   await db.booking.update({
-    where: { id: bookingId },
+    where: { id: parsed.data.bookingId },
     data: {
       status: "DONE",
       cancellationRequested: false,
@@ -85,51 +115,64 @@ export const concludeAdminBooking = async (formData: FormData) => {
     },
   })
 
-  revalidateAdminBookingPaths(bookingId)
+  revalidateAdminBookingPaths(parsed.data.bookingId)
 
-  if (returnTo) {
-    redirect(returnTo)
+  if (parsed.data.returnTo) {
+    redirect(parsed.data.returnTo)
   }
 }
 
 export const deleteAdminBooking = async (formData: FormData) => {
   const admin = await requireAdmin()
-  const bookingId = String(formData.get("bookingId") ?? "")
-  const returnTo = String(formData.get("returnTo") ?? "")
+  if (!canManageBookings(admin.role)) {
+    throw new Error("Not authorized to manage bookings")
+  }
 
-  if (!bookingId) {
+  const parsed = parseActionBasePayload(formData)
+  if (!parsed.success) {
     return
   }
 
-  const booking = await getBookingByIdForAdmin(bookingId, admin.id)
+  const booking = await getBookingByIdForAdmin(parsed.data.bookingId, admin.id, admin.role)
   if (!booking) {
     return
   }
 
   await db.booking.delete({
-    where: { id: bookingId },
+    where: { id: parsed.data.bookingId },
   })
 
-  revalidateAdminBookingPaths(bookingId)
+  revalidateAdminBookingPaths(parsed.data.bookingId)
 
-  if (returnTo) {
-    redirect(returnTo)
+  if (parsed.data.returnTo) {
+    redirect(parsed.data.returnTo)
   }
 }
 
 export const updateAdminBookingField = async (formData: FormData) => {
   const admin = await requireAdmin()
-  const bookingId = String(formData.get("bookingId") ?? "")
-  const field = String(formData.get("field") ?? "")
+  if (!canManageBookings(admin.role)) {
+    throw new Error("Not authorized to manage bookings")
+  }
 
-  if (!bookingId || !isEditableBookingField(field)) {
+  const parsedHeader = z
+    .object({
+      bookingId: idSchema,
+      field: editableBookingFieldSchema,
+    })
+    .safeParse({
+      bookingId: String(formData.get("bookingId") ?? ""),
+      field: sanitizeText(String(formData.get("field") ?? "")),
+    })
+
+  if (!parsedHeader.success) {
     return
   }
 
   const booking = await db.booking.findFirst({
     where: {
-      id: bookingId,
-      barberId: admin.id,
+      id: parsedHeader.data.bookingId,
+      ...(mustUseOwnDataScope(admin.role) ? { barberId: admin.id } : {}),
     },
     select: {
       id: true,
@@ -141,34 +184,39 @@ export const updateAdminBookingField = async (formData: FormData) => {
     return
   }
 
-  if (field === "client") {
-    const customerName = String(formData.get("customerName") ?? "").trim()
-    const customerPhone = String(formData.get("customerPhone") ?? "")
-      .replace(/\D/g, "")
-      .trim()
+  if (parsedHeader.data.field === "client") {
+    const parsedClient = z
+      .object({
+        customerName: customerNameSchema,
+        customerPhone: phoneSchema,
+      })
+      .safeParse({
+        customerName: String(formData.get("customerName") ?? ""),
+        customerPhone: String(formData.get("customerPhone") ?? ""),
+      })
 
-    if (!customerName || customerPhone.length < 10) {
+    if (!parsedClient.success) {
       return
     }
 
     await db.booking.update({
-      where: { id: bookingId },
+      where: { id: parsedHeader.data.bookingId },
       data: {
-        customerName,
-        customerPhone,
+        customerName: parsedClient.data.customerName,
+        customerPhone: parsedClient.data.customerPhone,
       },
     })
   }
 
-  if (field === "service") {
-    const serviceId = String(formData.get("serviceId") ?? "")
-    if (!serviceId) {
+  if (parsedHeader.data.field === "service") {
+    const parsedServiceId = idSchema.safeParse(String(formData.get("serviceId") ?? ""))
+    if (!parsedServiceId.success) {
       return
     }
 
     const service = await db.service.findUnique({
       where: {
-        id: serviceId,
+        id: parsedServiceId.data,
       },
       select: {
         id: true,
@@ -180,62 +228,52 @@ export const updateAdminBookingField = async (formData: FormData) => {
     }
 
     await db.booking.update({
-      where: { id: bookingId },
+      where: { id: parsedHeader.data.bookingId },
       data: {
         serviceId: service.id,
       },
     })
   }
 
-  if (field === "time") {
-    const time = String(formData.get("time") ?? "")
-    const timeMatch = time.match(/^([01]\d|2[0-3]):([0-5]\d)$/)
-
-    if (!timeMatch) {
+  if (parsedHeader.data.field === "time") {
+    const parsedTime = timeInputSchema.safeParse(String(formData.get("time") ?? ""))
+    if (!parsedTime.success) {
       return
     }
 
+    const [hours, minutes] = parsedTime.data.split(":").map(Number)
     const nextDate = new Date(booking.date)
-    nextDate.setHours(Number(timeMatch[1]), Number(timeMatch[2]), 0, 0)
+    nextDate.setHours(hours, minutes, 0, 0)
 
     await db.booking.update({
-      where: { id: bookingId },
+      where: { id: parsedHeader.data.bookingId },
       data: {
         date: nextDate,
       },
     })
   }
 
-  if (field === "date") {
-    const date = String(formData.get("date") ?? "")
-    const dateMatch = date.match(/^(\d{4})-(\d{2})-(\d{2})$/)
-
-    if (!dateMatch) {
+  if (parsedHeader.data.field === "date") {
+    const parsedDate = dateInputSchema.safeParse(String(formData.get("date") ?? ""))
+    if (!parsedDate.success) {
       return
     }
 
-    const nextDate = new Date(
-      Number(dateMatch[1]),
-      Number(dateMatch[2]) - 1,
-      Number(dateMatch[3]),
-      booking.date.getHours(),
-      booking.date.getMinutes(),
-      0,
-      0,
-    )
-
-    if (Number.isNaN(nextDate.getTime())) {
+    const nextDate = parseDateFromInput(parsedDate.data)
+    if (!nextDate) {
       return
     }
+
+    nextDate.setHours(booking.date.getHours(), booking.date.getMinutes(), 0, 0)
 
     await db.booking.update({
-      where: { id: bookingId },
+      where: { id: parsedHeader.data.bookingId },
       data: {
         date: nextDate,
       },
     })
   }
 
-  revalidateAdminBookingPaths(bookingId)
-  redirect(`/admin/bookings/${bookingId}`)
+  revalidateAdminBookingPaths(parsedHeader.data.bookingId)
+  redirect(`/admin/bookings/${parsedHeader.data.bookingId}`)
 }

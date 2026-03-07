@@ -8,6 +8,7 @@ import { updateAdminBookingField } from "../../../_actions/bookings"
 import PhoneMaskedInput from "./phone-masked-input"
 import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
+import { canManageBookings, mustUseOwnDataScope } from "@/app/_lib/admin-permissions"
 import { db } from "@/app/_lib/prisma"
 import { requireAdmin } from "@/app/_lib/require-admin"
 
@@ -47,6 +48,10 @@ const getFieldDescription = (field: EditableBookingField) => {
 
 const BookingEditPage = async ({ params, searchParams }: BookingEditPageProps) => {
   const admin = await requireAdmin()
+  if (!canManageBookings(admin.role)) {
+    notFound()
+  }
+
   const fieldParam = searchParams?.field
 
   if (!isEditableBookingField(fieldParam)) {
@@ -57,7 +62,7 @@ const BookingEditPage = async ({ params, searchParams }: BookingEditPageProps) =
     db.booking.findFirst({
       where: {
         id: params.bookingId,
-        barberId: admin.id,
+        ...(mustUseOwnDataScope(admin.role) ? { barberId: admin.id } : {}),
       },
       include: {
         service: true,

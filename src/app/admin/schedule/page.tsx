@@ -10,8 +10,10 @@ import {
 } from "../_actions/schedule"
 import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
+import { canManageSchedule } from "@/app/_lib/admin-permissions"
 import { db } from "@/app/_lib/prisma"
 import { requireAdmin } from "@/app/_lib/require-admin"
+import { redirect } from "next/navigation"
 
 const weekDays = [
   { value: 1, label: "Segunda-feira" },
@@ -27,6 +29,9 @@ const slotIntervalOptions = [10, 15, 20, 30]
 
 const ScheduleAdminPage = async () => {
   const admin = await requireAdmin()
+  if (!canManageSchedule(admin.role)) {
+    redirect("/admin/dashboard")
+  }
 
   const [workingHours, blockedTimes, settings] = await Promise.all([
     db.workingHour.findMany({

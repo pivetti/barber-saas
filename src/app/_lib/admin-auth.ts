@@ -55,6 +55,10 @@ export const verifyAdminAuthToken = (token: string): AdminAuthTokenPayload | nul
       return null
     }
 
+    if (!["OWNER", "ADMIN", "BARBER"].includes(String(decoded.role))) {
+      return null
+    }
+
     if (
       typeof decoded.sessionVersion !== "number" ||
       typeof decoded.refreshUntil !== "number"

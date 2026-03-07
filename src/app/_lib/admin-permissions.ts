@@ -1,7 +1,20 @@
 import { AdminAuthUser } from "./admin-auth"
-import { AppBarberRole, canManageBarbers, canManageServices } from "./admin-role"
+import {
+  AppBarberRole,
+  canManageBarbers,
+  canManageBookings,
+  canManageSchedule,
+  canManageServices,
+  mustUseOwnDataScope,
+} from "./admin-role"
 
-export { canManageBarbers, canManageServices }
+export {
+  canManageBarbers,
+  canManageBookings,
+  canManageSchedule,
+  canManageServices,
+  mustUseOwnDataScope,
+}
 
 export const canEditBarber = (actor: AdminAuthUser, targetRole: AppBarberRole) => {
   if (actor.role === "OWNER") {

@@ -1,11 +1,21 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { requireAdmin } from "@/app/_lib/require-admin"
+import { z } from "zod"
+import { canManageSchedule } from "@/app/_lib/admin-permissions"
+import {
+  dateInputSchema,
+  idSchema,
+  shortReasonSchema,
+  timeInputSchema,
+} from "@/app/_lib/input-validation"
 import { db } from "@/app/_lib/prisma"
+import { requireAdmin } from "@/app/_lib/require-admin"
 
 const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/
 const validSlotIntervals = new Set([10, 15, 20, 30])
+const slotIntervalSchema = z.union([z.literal(10), z.literal(15), z.literal(20), z.literal(30)])
+const dayOfWeekSchema = z.number().int().min(0).max(6)
 
 const normalizeTime = (value: string) => value.trim().slice(0, 5)
 
@@ -18,7 +28,7 @@ const parseDateFromInput = (value: string) => {
   const date = new Date(`${value}T00:00:00`)
 
   if (Number.isNaN(date.getTime())) {
-    throw new Error("Data invalida")
+    throw new Error("Invalid date")
   }
 
   return date
@@ -29,11 +39,11 @@ const parseTimeRange = (start: string, end: string) => {
   const endTime = normalizeTime(end)
 
   if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
-    throw new Error("Horário inválido")
+    throw new Error("Invalid time")
   }
 
   if (timeToMinutes(startTime) >= timeToMinutes(endTime)) {
-    throw new Error("Horário inicial deve ser menor que o horário final")
+    throw new Error("Start time must be lower than end time")
   }
 
   return {
@@ -49,10 +59,13 @@ const revalidateSchedulePages = () => {
 
 export const updateSlotInterval = async (formData: FormData) => {
   const admin = await requireAdmin()
-  const slotIntervalMinutes = Number(formData.get("slotIntervalMinutes"))
+  if (!canManageSchedule(admin.role)) {
+    throw new Error("Not authorized to manage schedule")
+  }
 
-  if (!validSlotIntervals.has(slotIntervalMinutes)) {
-    throw new Error("Intervalo inválido")
+  const parsedSlot = slotIntervalSchema.safeParse(Number(formData.get("slotIntervalMinutes")))
+  if (!parsedSlot.success || !validSlotIntervals.has(parsedSlot.data)) {
+    throw new Error("Invalid slot interval")
   }
 
   await db.scheduleSettings.upsert({
@@ -61,10 +74,10 @@ export const updateSlotInterval = async (formData: FormData) => {
     },
     create: {
       barberId: admin.id,
-      slotIntervalMinutes,
+      slotIntervalMinutes: parsedSlot.data,
     },
     update: {
-      slotIntervalMinutes,
+      slotIntervalMinutes: parsedSlot.data,
     },
   })
 
@@ -73,29 +86,43 @@ export const updateSlotInterval = async (formData: FormData) => {
 
 export const addWorkingHour = async (formData: FormData) => {
   const admin = await requireAdmin()
-
-  const dayOfWeek = Number(formData.get("dayOfWeek"))
-  const { startTime, endTime } = parseTimeRange(
-    String(formData.get("startTime") ?? ""),
-    String(formData.get("endTime") ?? ""),
-  )
-
-  if (Number.isNaN(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) {
-    throw new Error("Dia da semana inválido")
+  if (!canManageSchedule(admin.role)) {
+    throw new Error("Not authorized to manage schedule")
   }
+
+  const parsedDay = dayOfWeekSchema.safeParse(Number(formData.get("dayOfWeek")))
+  if (!parsedDay.success) {
+    throw new Error("Invalid day of week")
+  }
+
+  const parsedTimes = z
+    .object({
+      startTime: timeInputSchema,
+      endTime: timeInputSchema,
+    })
+    .safeParse({
+      startTime: String(formData.get("startTime") ?? ""),
+      endTime: String(formData.get("endTime") ?? ""),
+    })
+
+  if (!parsedTimes.success) {
+    throw new Error("Invalid working hour")
+  }
+
+  const { startTime, endTime } = parseTimeRange(parsedTimes.data.startTime, parsedTimes.data.endTime)
 
   await db.workingHour.upsert({
     where: {
       barberId_dayOfWeek_startTime_endTime: {
         barberId: admin.id,
-        dayOfWeek,
+        dayOfWeek: parsedDay.data,
         startTime,
         endTime,
       },
     },
     create: {
       barberId: admin.id,
-      dayOfWeek,
+      dayOfWeek: parsedDay.data,
       startTime,
       endTime,
     },
@@ -110,15 +137,18 @@ export const addWorkingHour = async (formData: FormData) => {
 
 export const deleteWorkingHour = async (formData: FormData) => {
   const admin = await requireAdmin()
-  const workingHourId = String(formData.get("workingHourId") ?? "")
+  if (!canManageSchedule(admin.role)) {
+    throw new Error("Not authorized to manage schedule")
+  }
 
-  if (!workingHourId) {
+  const parsedWorkingHourId = idSchema.safeParse(String(formData.get("workingHourId") ?? ""))
+  if (!parsedWorkingHourId.success) {
     return
   }
 
   await db.workingHour.deleteMany({
     where: {
-      id: workingHourId,
+      id: parsedWorkingHourId.data,
       barberId: admin.id,
     },
   })
@@ -128,14 +158,30 @@ export const deleteWorkingHour = async (formData: FormData) => {
 
 export const createBlockedTime = async (formData: FormData) => {
   const admin = await requireAdmin()
+  if (!canManageSchedule(admin.role)) {
+    throw new Error("Not authorized to manage schedule")
+  }
 
-  const dateInput = String(formData.get("date") ?? "").trim()
-  const reason = String(formData.get("reason") ?? "").trim()
-  const date = parseDateFromInput(dateInput)
-  const { startTime, endTime } = parseTimeRange(
-    String(formData.get("startTime") ?? ""),
-    String(formData.get("endTime") ?? ""),
-  )
+  const parsedPayload = z
+    .object({
+      date: dateInputSchema,
+      reason: shortReasonSchema,
+      startTime: timeInputSchema,
+      endTime: timeInputSchema,
+    })
+    .safeParse({
+      date: String(formData.get("date") ?? "").trim(),
+      reason: String(formData.get("reason") ?? ""),
+      startTime: String(formData.get("startTime") ?? ""),
+      endTime: String(formData.get("endTime") ?? ""),
+    })
+
+  if (!parsedPayload.success) {
+    throw new Error("Invalid blocked time payload")
+  }
+
+  const date = parseDateFromInput(parsedPayload.data.date)
+  const { startTime, endTime } = parseTimeRange(parsedPayload.data.startTime, parsedPayload.data.endTime)
 
   await db.blockedTime.create({
     data: {
@@ -143,7 +189,7 @@ export const createBlockedTime = async (formData: FormData) => {
       date,
       startTime,
       endTime,
-      reason: reason || null,
+      reason: parsedPayload.data.reason || null,
     },
   })
 
@@ -152,15 +198,18 @@ export const createBlockedTime = async (formData: FormData) => {
 
 export const deleteBlockedTime = async (formData: FormData) => {
   const admin = await requireAdmin()
-  const blockedTimeId = String(formData.get("blockedTimeId") ?? "")
+  if (!canManageSchedule(admin.role)) {
+    throw new Error("Not authorized to manage schedule")
+  }
 
-  if (!blockedTimeId) {
+  const parsedBlockedTimeId = idSchema.safeParse(String(formData.get("blockedTimeId") ?? ""))
+  if (!parsedBlockedTimeId.success) {
     return
   }
 
   await db.blockedTime.deleteMany({
     where: {
-      id: blockedTimeId,
+      id: parsedBlockedTimeId.data,
       barberId: admin.id,
     },
   })

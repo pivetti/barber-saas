@@ -54,14 +54,14 @@ const BarbersFlow = ({ barbers }: BarbersFlowProps) => {
         </p>
       </section>
 
-      <section className="mt-8">
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
+      <section className="mt-6">
+        <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-3">
           {barbers.map((barber) => (
             <article
               key={barber.id}
               className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/70"
             >
-              <div className="relative h-36 w-full sm:h-44">
+              <div className="relative h-28 w-full sm:h-36">
                 <Image
                   alt={barber.name}
                   src={barber.imageUrl}
@@ -71,12 +71,12 @@ const BarbersFlow = ({ barbers }: BarbersFlowProps) => {
                 />
               </div>
 
-              <div className="flex items-center justify-between gap-2 p-3 sm:p-4">
-                <h2 className="line-clamp-1 text-sm font-semibold text-zinc-100 sm:text-base">
+              <div className="space-y-2 p-3 sm:p-3">
+                <h2 className="line-clamp-1 text-sm font-semibold leading-tight text-zinc-100 sm:text-base">
                   {barber.name}
                 </h2>
                 <Button
-                  className="h-8 rounded-xl bg-violet-500 px-3 text-xs font-semibold text-white hover:bg-violet-400 sm:h-9 sm:text-sm"
+                  className="h-7.5 w-full rounded-xl bg-violet-500 px-3 text-xs font-semibold text-white hover:bg-violet-400 sm:h-9 sm:text-sm"
                   onClick={() => handleSelectBarber(barber.id)}
                 >
                   Selecionar

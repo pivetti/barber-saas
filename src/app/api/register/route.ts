@@ -1,5 +1,7 @@
 import bcrypt from "bcrypt"
 import { NextResponse } from "next/server"
+import { z } from "zod"
+import { nameSchema, passwordSchema, phoneSchema } from "@/app/_lib/input-validation"
 import { db } from "@/app/_lib/prisma"
 
 interface RegisterBody {
@@ -9,34 +11,27 @@ interface RegisterBody {
   confirmPassword?: string
 }
 
+const registerBodySchema = z
+  .object({
+    name: nameSchema,
+    phone: phoneSchema,
+    password: passwordSchema,
+    confirmPassword: passwordSchema,
+  })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: "password and confirmPassword must match",
+    path: ["confirmPassword"],
+  })
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as RegisterBody
-    const name = body.name?.trim()
-    const phone = body.phone?.trim()
-    const password = body.password
-    const confirmPassword = body.confirmPassword
-
-    if (!name || !phone || !password || !confirmPassword) {
-      return NextResponse.json(
-        { error: "name, phone, password and confirmPassword are required" },
-        { status: 400 },
-      )
+    const parsed = registerBodySchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: "invalid register payload" }, { status: 400 })
     }
 
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: "password must have at least 6 characters" },
-        { status: 400 },
-      )
-    }
-
-    if (password !== confirmPassword) {
-      return NextResponse.json(
-        { error: "password and confirmPassword must match" },
-        { status: 400 },
-      )
-    }
+    const { name, phone, password } = parsed.data
 
     const existingByName = await db.user.findUnique({
       where: { name },

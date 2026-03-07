@@ -1,17 +1,24 @@
 import bcrypt from "bcrypt"
 import { NextResponse } from "next/server"
+import { z } from "zod"
 import {
   ADMIN_AUTH_COOKIE_NAME,
   ADMIN_AUTH_REFRESH_WINDOW_SECONDS,
   adminAuthCookieOptions,
   signAdminAuthToken,
 } from "@/app/_lib/admin-auth"
+import { emailSchema, passwordSchema, sanitizeText } from "@/app/_lib/input-validation"
 import { db } from "@/app/_lib/prisma"
 
 interface AdminLoginBody {
   email?: string
   password?: string
 }
+
+const adminLoginBodySchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+})
 
 const MAX_FAILED_ATTEMPTS = 15
 const ATTEMPT_WINDOW_MINUTES = 15
@@ -20,10 +27,10 @@ const BLOCK_DURATION_MINUTES = 10
 const getClientIp = (request: Request) => {
   const forwardedFor = request.headers.get("x-forwarded-for")
   if (forwardedFor) {
-    return forwardedFor.split(",")[0]?.trim() || "unknown"
+    return sanitizeText(forwardedFor.split(",")[0] ?? "").slice(0, 64) || "unknown"
   }
 
-  return request.headers.get("x-real-ip")?.trim() || "unknown"
+  return sanitizeText(request.headers.get("x-real-ip") ?? "").slice(0, 64) || "unknown"
 }
 
 const getBlockedResponse = (blockedUntil: Date) => {
@@ -103,16 +110,13 @@ const registerFailedAttempt = async (email: string, ipAddress: string, now: Date
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as AdminLoginBody
-    const email = body.email?.trim().toLowerCase()
-    const password = body.password
-    const ipAddress = getClientIp(request)
-
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "email and password are required" },
-        { status: 400 },
-      )
+    const parsed = adminLoginBodySchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: "invalid login payload" }, { status: 400 })
     }
+
+    const { email, password } = parsed.data
+    const ipAddress = getClientIp(request)
 
     const now = new Date()
     const rateLimit = await db.adminLoginAttempt.findUnique({

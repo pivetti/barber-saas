@@ -11,31 +11,50 @@ import {
   canManageBarbers,
   canToggleBarberStatus,
 } from "@/app/_lib/admin-permissions"
+import {
+  emailSchema,
+  idSchema,
+  nameSchema,
+  optionalUrlSchema,
+  passwordSchema,
+  phoneSchema,
+  sanitizeText,
+} from "@/app/_lib/input-validation"
 import { db } from "@/app/_lib/prisma"
 import { requireAdmin } from "@/app/_lib/require-admin"
 
 const BARBER_DEFAULT_IMAGE_URL = "/logo-jesi.png"
+const optionalPhoneSchema = z
+  .string()
+  .transform((value) => value.trim())
+  .refine((value) => value.length === 0 || value.length <= 20, "Invalid phone")
+  .transform((value) => (value.length === 0 ? undefined : value))
+  .pipe(phoneSchema.optional())
 
 const createBarberSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  phone: z.string().optional(),
-  password: z.string().min(6),
-  imageUrl: z.string().url().optional(),
+  name: nameSchema,
+  email: emailSchema,
+  phone: optionalPhoneSchema,
+  password: passwordSchema,
+  imageUrl: optionalUrlSchema,
   role: z.enum(["ADMIN", "BARBER"]),
 })
 
 const updateBarberSchema = z.object({
-  barberId: z.string().min(1),
-  name: z.string().min(2),
-  email: z.string().email(),
-  phone: z.string().optional(),
-  password: z.string().min(6).optional(),
-  imageUrl: z.string().url().optional(),
+  barberId: idSchema,
+  name: nameSchema,
+  email: emailSchema,
+  phone: optionalPhoneSchema,
+  password: z
+    .string()
+    .transform((value) => value.trim())
+    .transform((value) => (value.length > 0 ? value : undefined))
+    .pipe(passwordSchema.optional()),
+  imageUrl: optionalUrlSchema,
 })
 
 const changeRoleSchema = z.object({
-  barberId: z.string().min(1),
+  barberId: idSchema,
   role: z.enum(["ADMIN", "BARBER"]),
 })
 
@@ -63,11 +82,11 @@ export const createBarber = async (formData: FormData) => {
   }
 
   const parsed = createBarberSchema.safeParse({
-    name: String(formData.get("name") ?? "").trim(),
-    email: String(formData.get("email") ?? "").trim().toLowerCase(),
-    phone: String(formData.get("phone") ?? "").trim(),
+    name: sanitizeText(String(formData.get("name") ?? "")),
+    email: sanitizeText(String(formData.get("email") ?? "")),
+    phone: String(formData.get("phone") ?? ""),
     password: String(formData.get("password") ?? ""),
-    imageUrl: String(formData.get("imageUrl") ?? "").trim() || undefined,
+    imageUrl: String(formData.get("imageUrl") ?? ""),
     role: String(formData.get("role") ?? "BARBER"),
   })
 
@@ -107,11 +126,11 @@ export const updateBarber = async (formData: FormData) => {
 
   const parsed = updateBarberSchema.safeParse({
     barberId: String(formData.get("barberId") ?? ""),
-    name: String(formData.get("name") ?? "").trim(),
-    email: String(formData.get("email") ?? "").trim().toLowerCase(),
-    phone: String(formData.get("phone") ?? "").trim(),
-    password: String(formData.get("password") ?? "").trim() || undefined,
-    imageUrl: String(formData.get("imageUrl") ?? "").trim() || undefined,
+    name: sanitizeText(String(formData.get("name") ?? "")),
+    email: sanitizeText(String(formData.get("email") ?? "")),
+    phone: String(formData.get("phone") ?? ""),
+    password: String(formData.get("password") ?? ""),
+    imageUrl: String(formData.get("imageUrl") ?? ""),
   })
 
   if (!parsed.success) {
@@ -170,10 +189,11 @@ export const toggleBarberStatus = async (formData: FormData) => {
     throw new Error("Not authorized to manage barbers")
   }
 
-  const barberId = String(formData.get("barberId") ?? "")
-  if (!barberId) {
+  const parsedBarberId = idSchema.safeParse(String(formData.get("barberId") ?? ""))
+  if (!parsedBarberId.success) {
     return
   }
+  const barberId = parsedBarberId.data
 
   const target = await db.barber.findUnique({
     where: { id: barberId },

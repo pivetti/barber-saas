@@ -1,11 +1,13 @@
 import bcrypt from "bcrypt"
 import { NextResponse } from "next/server"
+import { z } from "zod"
 import {
   AUTH_COOKIE_NAME,
   AUTH_REFRESH_WINDOW_SECONDS,
   authCookieOptions,
   signAuthToken,
 } from "@/app/_lib/auth"
+import { nameSchema, passwordSchema } from "@/app/_lib/input-validation"
 import { db } from "@/app/_lib/prisma"
 
 interface LoginBody {
@@ -13,18 +15,21 @@ interface LoginBody {
   password?: string
 }
 
+const loginBodySchema = z.object({
+  name: nameSchema,
+  password: passwordSchema,
+})
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as LoginBody
-    const name = body.name?.trim()
-    const password = body.password
+    const parsed = loginBodySchema.safeParse(body)
 
-    if (!name || !password) {
-      return NextResponse.json(
-        { error: "name and password are required" },
-        { status: 400 },
-      )
+    if (!parsed.success) {
+      return NextResponse.json({ error: "invalid login payload" }, { status: 400 })
     }
+
+    const { name, password } = parsed.data
 
     const user = await db.user.findUnique({
       where: { name },

@@ -1,18 +1,41 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { z } from "zod"
 import { canManageServices } from "@/app/_lib/admin-permissions"
-import { requireAdmin } from "@/app/_lib/require-admin"
+import {
+  idSchema,
+  optionalUrlSchema,
+  sanitizeText,
+  serviceDescriptionSchema,
+} from "@/app/_lib/input-validation"
 import { db } from "@/app/_lib/prisma"
+import { requireAdmin } from "@/app/_lib/require-admin"
 
 const DEFAULT_SERVICE_IMAGE_URL = "/logo-jesi.png"
 
-const parsePrice = (value: string) => {
-  const normalized = value.replace(",", ".").trim()
-  const price = Number(normalized)
+const serviceNameSchema = z.string().transform(sanitizeText).pipe(z.string().min(2).max(80))
+const priceInputSchema = z
+  .string()
+  .transform((value) => value.replace(",", ".").trim())
+  .pipe(z.string().regex(/^\d+(\.\d{1,2})?$/).max(16))
 
-  if (Number.isNaN(price) || price <= 0) {
-    throw new Error("Preco inválido")
+const createServiceSchema = z.object({
+  name: serviceNameSchema,
+  description: serviceDescriptionSchema,
+  imageUrl: optionalUrlSchema,
+  price: priceInputSchema,
+})
+
+const updateServiceSchema = createServiceSchema.extend({
+  serviceId: idSchema,
+})
+
+const parsePrice = (value: string) => {
+  const price = Number(value)
+
+  if (Number.isNaN(price) || price <= 0 || price > 100000) {
+    throw new Error("Preco invalido")
   }
 
   return price
@@ -25,23 +48,24 @@ export const createAdminService = async (formData: FormData) => {
     throw new Error("Not authorized to manage services")
   }
 
-  const name = String(formData.get("name") ?? "").trim()
-  const description = String(formData.get("description") ?? "").trim()
-  const imageUrlRaw = String(formData.get("imageUrl") ?? "").trim()
-  const priceRaw = String(formData.get("price") ?? "").trim()
-  const imageUrl = imageUrlRaw || DEFAULT_SERVICE_IMAGE_URL
+  const parsed = createServiceSchema.safeParse({
+    name: String(formData.get("name") ?? ""),
+    description: String(formData.get("description") ?? ""),
+    imageUrl: String(formData.get("imageUrl") ?? ""),
+    price: String(formData.get("price") ?? ""),
+  })
 
-  if (!name || !priceRaw) {
-    throw new Error("Nome e preco sao obrigatorios")
+  if (!parsed.success) {
+    throw new Error("Invalid service data")
   }
 
-  const price = parsePrice(priceRaw)
+  const price = parsePrice(parsed.data.price)
 
   await db.service.create({
     data: {
-      name,
-      description,
-      imageUrl,
+      name: parsed.data.name,
+      description: parsed.data.description,
+      imageUrl: parsed.data.imageUrl ?? DEFAULT_SERVICE_IMAGE_URL,
       price,
     },
   })
@@ -57,27 +81,28 @@ export const updateAdminService = async (formData: FormData) => {
     throw new Error("Not authorized to manage services")
   }
 
-  const serviceId = String(formData.get("serviceId") ?? "")
-  const name = String(formData.get("name") ?? "").trim()
-  const description = String(formData.get("description") ?? "").trim()
-  const imageUrlRaw = String(formData.get("imageUrl") ?? "").trim()
-  const priceRaw = String(formData.get("price") ?? "").trim()
-  const imageUrl = imageUrlRaw || DEFAULT_SERVICE_IMAGE_URL
+  const parsed = updateServiceSchema.safeParse({
+    serviceId: String(formData.get("serviceId") ?? ""),
+    name: String(formData.get("name") ?? ""),
+    description: String(formData.get("description") ?? ""),
+    imageUrl: String(formData.get("imageUrl") ?? ""),
+    price: String(formData.get("price") ?? ""),
+  })
 
-  if (!serviceId || !name || !priceRaw) {
-    throw new Error("Nome e preco sao obrigatorios")
+  if (!parsed.success) {
+    throw new Error("Invalid service data")
   }
 
-  const price = parsePrice(priceRaw)
+  const price = parsePrice(parsed.data.price)
 
   await db.service.update({
     where: {
-      id: serviceId,
+      id: parsed.data.serviceId,
     },
     data: {
-      name,
-      description,
-      imageUrl,
+      name: parsed.data.name,
+      description: parsed.data.description,
+      imageUrl: parsed.data.imageUrl ?? DEFAULT_SERVICE_IMAGE_URL,
       price,
     },
   })
@@ -93,13 +118,13 @@ export const deleteAdminService = async (formData: FormData) => {
     throw new Error("Not authorized to manage services")
   }
 
-  const serviceId = String(formData.get("serviceId") ?? "")
-  if (!serviceId) {
+  const parsedServiceId = idSchema.safeParse(String(formData.get("serviceId") ?? ""))
+  if (!parsedServiceId.success) {
     return
   }
 
   await db.service.delete({
-    where: { id: serviceId },
+    where: { id: parsedServiceId.data },
   })
 
   revalidatePath("/admin/services")

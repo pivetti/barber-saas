@@ -6,6 +6,7 @@ import { notFound } from "next/navigation"
 import AdminHeader from "../../_components/admin-header"
 import { cancelAdminBooking, concludeAdminBooking, deleteAdminBooking } from "../../_actions/bookings"
 import { Button } from "@/app/_components/ui/button"
+import { canManageBookings, mustUseOwnDataScope } from "@/app/_lib/admin-permissions"
 import { db } from "@/app/_lib/prisma"
 import { requireAdmin } from "@/app/_lib/require-admin"
 import { cn } from "@/app/_lib/utils"
@@ -66,11 +67,14 @@ const editButtonClassName =
 
 const BookingDetailPage = async ({ params }: BookingDetailPageProps) => {
   const admin = await requireAdmin()
+  if (!canManageBookings(admin.role)) {
+    notFound()
+  }
 
   const booking = await db.booking.findFirst({
     where: {
       id: params.bookingId,
-      barberId: admin.id,
+      ...(mustUseOwnDataScope(admin.role) ? { barberId: admin.id } : {}),
     },
     include: {
       service: true,
