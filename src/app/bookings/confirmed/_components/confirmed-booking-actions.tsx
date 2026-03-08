@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
@@ -18,9 +19,15 @@ import {
 
 interface ConfirmedBookingActionsProps {
   canCancel: boolean
+  customerReceiptWhatsappUrl: string
+  canSendReceipt: boolean
 }
 
-const ConfirmedBookingActions = ({ canCancel }: ConfirmedBookingActionsProps) => {
+const ConfirmedBookingActions = ({
+  canCancel,
+  customerReceiptWhatsappUrl,
+  canSendReceipt,
+}: ConfirmedBookingActionsProps) => {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -43,6 +50,36 @@ const ConfirmedBookingActions = ({ canCancel }: ConfirmedBookingActionsProps) =>
 
   return (
     <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+      <div className="flex flex-col gap-1.5">
+        <Link
+          href={customerReceiptWhatsappUrl}
+          target="_blank"
+          rel="noreferrer"
+          aria-disabled={!canSendReceipt}
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 text-sm font-semibold text-emerald-100 transition-colors hover:bg-emerald-500/25 aria-disabled:pointer-events-none aria-disabled:opacity-50"
+        >
+          <Image
+            src="/Logo do WhatsApp em estilo minimalista.png"
+            alt="WhatsApp"
+            width={16}
+            height={16}
+            className="h-4 w-4 object-contain"
+          />
+          Receber comprovante
+        </Link>
+        <p className="max-w-sm text-sm text-zinc-400">
+          Clique para receber o comprovante do agendamento no seu WhatsApp e o{" "}
+          <strong>link de cancelamento</strong>.
+        </p>
+      </div>
+
+      <Link
+        href="/agendar"
+        className="inline-flex h-10 items-center justify-center rounded-xl border border-violet-500/40 bg-violet-500/10 px-4 text-sm font-semibold text-violet-100 transition-colors hover:bg-violet-500/20"
+      >
+        Agendar mais um horário
+      </Link>
+
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button variant="destructive" disabled={isPending || isCanceled}>
@@ -53,7 +90,7 @@ const ConfirmedBookingActions = ({ canCancel }: ConfirmedBookingActionsProps) =>
           <DialogHeader>
             <DialogTitle>Confirmar cancelamento</DialogTitle>
             <DialogDescription className="text-zinc-400">
-              Você tem certeza que deseja cancelar este agendamento?
+              Voce tem certeza que deseja cancelar este agendamento?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -66,22 +103,6 @@ const ConfirmedBookingActions = ({ canCancel }: ConfirmedBookingActionsProps) =>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <Link
-        href="/agendar"
-        className="inline-flex h-10 items-center justify-center rounded-xl border border-violet-500/40 bg-violet-500/10 px-4 text-sm font-semibold text-violet-100 transition-colors hover:bg-violet-500/20"
-      >
-        Agendar novamente
-      </Link>
-
-      <Link
-        href="https://wa.me/5500000000000"
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-700 px-4 text-sm font-medium text-zinc-100 transition-colors hover:border-violet-500/40 hover:bg-violet-500/10"
-      >
-        Falar com o barbeiro
-      </Link>
     </div>
   )
 }

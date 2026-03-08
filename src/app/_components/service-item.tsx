@@ -14,7 +14,7 @@ import {
 import { ptBR } from "date-fns/locale"
 import Image from "next/image"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 import { createBooking } from "../_actions/create-booking"
 import { getBookingDayContext } from "../_actions/get-booking-day-context"
@@ -53,6 +53,8 @@ interface TimeSlot {
   available: boolean
   unavailableMessage?: string
 }
+
+type DayContextStatus = "idle" | "loading" | "loaded" | "error"
 
 const getEasterDate = (year: number) => {
   const a = year % 19
@@ -161,27 +163,58 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
   const [selectedTime, setSelectedTime] = useState<string | undefined>()
   const [dayBookings, setDayBookings] = useState<Array<{ date: Date }>>([])
   const [availableTimes, setAvailableTimes] = useState<string[]>([])
+  const [dayContextStatus, setDayContextStatus] = useState<DayContextStatus>("idle")
+  const fetchRequestIdRef = useRef(0)
   const serviceImageUrl = getServiceImageUrl(service.name, service.imageUrl)
   const maxBookingDate = endOfDay(addWeeks(new Date(), 4))
 
   useEffect(() => {
+    let isMounted = true
+    const requestId = fetchRequestIdRef.current + 1
+    fetchRequestIdRef.current = requestId
+
     const fetchBookings = async () => {
       if (!selectedDay) {
         setDayBookings([])
         setAvailableTimes([])
+        setDayContextStatus("idle")
         return
       }
 
-      const context = await getBookingDayContext({
-        date: selectedDay,
-        barberId: barber.id,
-      })
+      setDayContextStatus("loading")
+      setDayBookings([])
+      setAvailableTimes([])
 
-      setDayBookings(context.bookings)
-      setAvailableTimes(context.availableTimes)
+      try {
+        const context = await getBookingDayContext({
+          date: selectedDay,
+          barberId: barber.id,
+        })
+
+        if (!isMounted || requestId !== fetchRequestIdRef.current) {
+          return
+        }
+
+        setDayBookings(context.bookings)
+        setAvailableTimes(context.availableTimes)
+        setDayContextStatus("loaded")
+      } catch (error) {
+        if (!isMounted || requestId !== fetchRequestIdRef.current) {
+          return
+        }
+
+        console.error("[service-item] failed to load day context", error)
+        setDayBookings([])
+        setAvailableTimes([])
+        setDayContextStatus("error")
+      }
     }
 
     fetchBookings()
+
+    return () => {
+      isMounted = false
+    }
   }, [barber.id, selectedDay, service.id])
 
   const selectedDate = useMemo(() => {
@@ -240,6 +273,19 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
     }
 
     setBookingSheetIsOpen(true)
+  }
+
+  const handleSelectDay = (day: Date | undefined) => {
+    setSelectedDay(day)
+    setSelectedTime(undefined)
+
+    if (day) {
+      setDayContextStatus("loading")
+    } else {
+      setDayContextStatus("idle")
+      setDayBookings([])
+      setAvailableTimes([])
+    }
   }
 
   const handleCreateBooking = async () => {
@@ -342,7 +388,7 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
             <Calendar
               mode="single"
               selected={selectedDay}
-              onSelect={setSelectedDay}
+              onSelect={handleSelectDay}
               disabled={(date) =>
                 date < startOfDay(new Date()) ||
                 date > maxBookingDate ||
@@ -354,7 +400,15 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
 
             {selectedDay && (
               <>
-                {timeList.length > 0 ? (
+                {dayContextStatus === "loading" ? (
+                  <div className="mt-5 rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 text-center text-sm text-zinc-400">
+                    Carregando horarios...
+                  </div>
+                ) : dayContextStatus === "error" ? (
+                  <div className="mt-5 rounded-xl border border-red-500/25 bg-red-500/10 p-3 text-center text-sm text-red-200">
+                    Nao foi possivel carregar os horarios agora. Tente novamente.
+                  </div>
+                ) : timeList.length > 0 ? (
                   <div className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-4">
                     {timeList.map((slot) => (
                       <Button

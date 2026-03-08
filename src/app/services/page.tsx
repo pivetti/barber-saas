@@ -1,7 +1,9 @@
 import Link from "next/link"
 import Header from "../_components/header"
 import ServiceItem from "../_components/service-item"
+import { idSchema } from "../_lib/input-validation"
 import { db } from "../_lib/prisma"
+import { getSafePublicImagePath } from "../_lib/safe-public-image"
 
 interface ServicesPageProps {
   searchParams?: {
@@ -9,8 +11,11 @@ interface ServicesPageProps {
   }
 }
 
+export const dynamic = "force-dynamic"
+
 const ServicesPage = async ({ searchParams }: ServicesPageProps) => {
-  const barberId = searchParams?.barberId
+  const parsedBarberId = idSchema.safeParse(searchParams?.barberId ?? "")
+  const barberId = parsedBarberId.success ? parsedBarberId.data : null
 
   if (!barberId) {
     return (
@@ -30,9 +35,22 @@ const ServicesPage = async ({ searchParams }: ServicesPageProps) => {
     )
   }
 
-  const selectedBarber = await db.barber.findUnique({
-    where: { id: barberId },
-  })
+  let selectedBarber: { id: string; name: string } | null = null
+
+  try {
+    selectedBarber = await db.barber.findUnique({
+      where: { id: barberId },
+      select: {
+        id: true,
+        name: true,
+      },
+    })
+  } catch (error) {
+    console.error("[services-page] db.barber.findUnique failed", {
+      barberId,
+      error,
+    })
+  }
 
   if (!selectedBarber) {
     return (
@@ -51,14 +69,34 @@ const ServicesPage = async ({ searchParams }: ServicesPageProps) => {
     )
   }
 
-  const services = await db.service.findMany({
-    orderBy: {
-      name: "asc",
-    },
-  })
+  let services: Array<{
+    id: string
+    name: string
+    description: string
+    imageUrl: string
+    price: { toString: () => string }
+  }> = []
+
+  try {
+    services = await db.service.findMany({
+      orderBy: {
+        name: "asc",
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        imageUrl: true,
+        price: true,
+      },
+    })
+  } catch (error) {
+    console.error("[services-page] db.service.findMany failed", error)
+  }
 
   const serializedServices = services.map((service) => ({
     ...service,
+    imageUrl: getSafePublicImagePath(service.imageUrl, "/logo-jesi.png"),
     price: service.price.toString(),
   }))
 

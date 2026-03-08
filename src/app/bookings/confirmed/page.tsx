@@ -3,6 +3,7 @@ import { ptBR } from "date-fns/locale"
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import Header from "@/app/_components/header"
+import { getAppEnv } from "@/app/_lib/env"
 import { getPublicBookingFromSession } from "@/app/_lib/public-booking-session"
 import ConfirmedBookingActions from "./_components/confirmed-booking-actions"
 
@@ -10,6 +11,13 @@ interface ConfirmedBookingPageProps {
   searchParams?: {
     token?: string
   }
+}
+
+const normalizeWhatsappPhone = (value: string) => {
+  const digits = value.replace(/\D/g, "")
+  if (!digits) return ""
+  if (digits.startsWith("55")) return digits
+  return `55${digits}`
 }
 
 const ConfirmedBookingPage = async ({ searchParams }: ConfirmedBookingPageProps) => {
@@ -23,6 +31,24 @@ const ConfirmedBookingPage = async ({ searchParams }: ConfirmedBookingPageProps)
     notFound()
   }
 
+  const formattedDate = format(booking.date, "dd/MM/yyyy 'as' HH:mm", { locale: ptBR })
+  const customerWhatsappPhone = normalizeWhatsappPhone(booking.customerPhone)
+  const managementUrl = `${getAppEnv().NEXT_PUBLIC_APP_URL}/manage?token=${encodeURIComponent(booking.cancellationToken)}`
+  const receiptMessage = [
+    "Comprovante de agendamento",
+    `Cliente: ${booking.customerName}`,
+    `Servico: ${booking.service.name}`,
+    `Barbeiro: ${booking.barber?.name ?? "barbeiro"}`,
+    `Data: ${formattedDate}`,
+    "",
+    "Cancelar agendamento:",
+    "",
+    managementUrl,
+  ].join("\n")
+  const customerReceiptWhatsappUrl = customerWhatsappPhone
+    ? `https://wa.me/${customerWhatsappPhone}?text=${encodeURIComponent(receiptMessage)}`
+    : "#"
+
   return (
     <>
       <Header />
@@ -34,16 +60,20 @@ const ConfirmedBookingPage = async ({ searchParams }: ConfirmedBookingPageProps)
           </p>
           <p className="mt-1 text-sm text-zinc-400">
             {booking.service.name} com {booking.barber?.name ?? "barbeiro"} em{" "}
-            {format(booking.date, "dd/MM/yyyy 'as' HH:mm", { locale: ptBR })}.
+            {formattedDate}.
           </p>
         </section>
 
         <section className="mt-5 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5">
-          <p className="text-sm text-zinc-300">
-            Use esta sessao temporaria para cancelar agora ou solicitar cancelamento ao barbeiro.
+          <p className="mb-4 text-xs font-bold uppercase text-zinc-400">
+            Sessão temporária
           </p>
 
-          <ConfirmedBookingActions canCancel={booking.status === "SCHEDULED"} />
+          <ConfirmedBookingActions
+            canCancel={booking.status === "SCHEDULED"}
+            customerReceiptWhatsappUrl={customerReceiptWhatsappUrl}
+            canSendReceipt={Boolean(customerWhatsappPhone)}
+          />
 
           <div className="mt-3">
             <Link

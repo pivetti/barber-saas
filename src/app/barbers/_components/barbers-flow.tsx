@@ -1,6 +1,5 @@
 "use client"
 
-import { Barber } from "@prisma/client"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -11,7 +10,11 @@ import {
 import { Button } from "@/app/_components/ui/button"
 
 interface BarbersFlowProps {
-  barbers: Barber[]
+  barbers: Array<{
+    id: string
+    name: string
+    imageUrl: string
+  }>
 }
 
 const BarbersFlow = ({ barbers }: BarbersFlowProps) => {
