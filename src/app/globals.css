@@ -52,3 +52,13 @@
     @apply h-full bg-background text-foreground;
   }
 }
+
+@media (max-width: 640px) {
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    margin: 0;
+  }
+
+  input[type="time"]::-webkit-datetime-edit {
+    padding-right: 0;
+  }
+}

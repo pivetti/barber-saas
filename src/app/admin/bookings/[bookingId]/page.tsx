@@ -111,7 +111,7 @@ const BookingDetailPage = async ({ params }: BookingDetailPageProps) => {
           </div>
         </section>
 
-        <section className="mt-5 rounded-3xl border border-zinc-800/65 bg-zinc-950/45 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.24)] sm:mt-6 sm:p-5">
+        <section className="mt-5 sm:mt-6">
           <article className="rounded-2xl border border-zinc-800/70 bg-gradient-to-b from-zinc-900/80 to-zinc-950/75 p-4 shadow-[0_10px_22px_rgba(0,0,0,0.22)] sm:p-6 lg:p-7">
             <div className="grid gap-4 lg:grid-cols-[1.4fr_0.9fr]">
               <div className="rounded-2xl border border-zinc-800/70 bg-zinc-950/45 p-4 sm:p-5">

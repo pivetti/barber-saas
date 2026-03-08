@@ -1,5 +1,4 @@
 import bcrypt from "bcrypt"
-import { randomBytes } from "crypto"
 import { Prisma, PrismaClient } from "@prisma/client"
 import { z } from "zod"
 
@@ -74,12 +73,10 @@ async function upsertServices() {
 async function createInitialAdminBarber(env: SeedEnv) {
   const adminEmail = env.ADMIN_EMAIL.toLowerCase()
   const adminPassword = env.ADMIN_PASSWORD
-  const adminName = env.ADMIN_NAME?.trim() || "Goku"
+  const adminName = env.ADMIN_NAME?.trim() || "Jesi"
   const adminPhone = env.ADMIN_PHONE?.trim() || null
   const adminRole = env.ADMIN_ROLE ?? "OWNER"
-  const adminImageUrl =
-    env.ADMIN_IMAGE_URL?.trim() ||
-    "/barbers/goku.jpg"
+  const adminImageUrl = env.ADMIN_IMAGE_URL?.trim() || "/logo-jesi.png"
 
   const existing = await prisma.barber.findUnique({
     where: { email: adminEmail },
@@ -125,16 +122,11 @@ async function seedDatabase() {
       await prisma.barberAvailability.deleteMany({})
       await prisma.booking.deleteMany({})
 
-      const services = await prisma.service.findMany({
-        orderBy: { name: "asc" },
-        take: 2,
-      })
       const barbers = await prisma.barber.findMany({
         where: {
           isActive: true,
         },
         orderBy: { createdAt: "asc" },
-        take: 2,
       })
 
       for (const barber of barbers) {
@@ -158,31 +150,6 @@ async function seedDatabase() {
             { barberId: barber.id, dayOfWeek: 5, startTime: "08:00", endTime: "12:00" },
             { barberId: barber.id, dayOfWeek: 5, startTime: "13:00", endTime: "18:00" },
             { barberId: barber.id, dayOfWeek: 6, startTime: "08:00", endTime: "13:00" },
-          ],
-        })
-      }
-
-      if (services.length >= 2 && barbers.length >= 2) {
-        await prisma.booking.createMany({
-          data: [
-            {
-              serviceId: services[0].id,
-              barberId: barbers[0].id,
-              date: new Date(Date.now() + 24 * 60 * 60 * 1000),
-              customerName: "Henrique Pivetti",
-              customerPhone: "5511991111111",
-              cancellationToken: `ct_${randomBytes(16).toString("hex")}`,
-              status: "SCHEDULED",
-            },
-            {
-              serviceId: services[1].id,
-              barberId: barbers[1].id,
-              date: new Date(Date.now() - 24 * 60 * 60 * 1000),
-              customerName: "Joao Silva",
-              customerPhone: "5511992222222",
-              cancellationToken: `ct_${randomBytes(16).toString("hex")}`,
-              status: "DONE",
-            },
           ],
         })
       }

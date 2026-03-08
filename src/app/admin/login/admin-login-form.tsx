@@ -61,7 +61,6 @@ const AdminLoginForm = ({ nextPath }: AdminLoginFormProps) => {
         value={email}
         onChange={(event) => setEmail(event.target.value)}
         required
-        className="border-zinc-700/80 bg-zinc-900/85 text-zinc-100"
       />
       <Input
         type="password"
@@ -69,7 +68,6 @@ const AdminLoginForm = ({ nextPath }: AdminLoginFormProps) => {
         value={password}
         onChange={(event) => setPassword(event.target.value)}
         required
-        className="border-zinc-700/80 bg-zinc-900/85 text-zinc-100"
       />
 
       {errorMessage && (
@@ -78,7 +76,7 @@ const AdminLoginForm = ({ nextPath }: AdminLoginFormProps) => {
 
       <Button
         type="submit"
-        className="h-11 w-full rounded-xl border border-violet-500/35 bg-violet-500/15 text-violet-100 hover:bg-violet-500/25"
+        className="h-10 w-full sm:w-auto"
         disabled={isSubmitting}
       >
         {isSubmitting ? "Entrando..." : "Entrar no painel"}

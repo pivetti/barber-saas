@@ -139,7 +139,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
           </div>
         </section>
 
-        <section className="mt-5 rounded-3xl border border-zinc-800/65 bg-zinc-950/45 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.24)] sm:mt-6 sm:p-4">
+        <section className="mt-5 sm:mt-6">
           {bookings.length === 0 ? (
             <div className="rounded-2xl border border-zinc-800/70 bg-gradient-to-b from-zinc-900/85 to-zinc-950/80 px-4 py-12 text-center">
               <p className="text-sm font-medium text-zinc-300">Nenhum agendamento para esta data.</p>

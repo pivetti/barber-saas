@@ -80,8 +80,8 @@ const ScheduleAdminPage = async () => {
           </div>
         </section>
 
-        <section className="mt-5 rounded-3xl border border-zinc-800/65 bg-zinc-950/45 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.24)] sm:mt-6 sm:p-5">
-          <div className="rounded-2xl border border-zinc-800/70 bg-gradient-to-b from-zinc-900/80 to-zinc-950/75 p-4 shadow-[0_10px_22px_rgba(0,0,0,0.22)] sm:p-5">
+        <section className="mt-5 sm:mt-6">
+          <div className="rounded-2xl border border-zinc-800/70 bg-gradient-to-b from-zinc-900/80 to-zinc-950/75 p-4 shadow-[0_18px_38px_rgba(0,0,0,0.36)] sm:p-5">
             <h2 className="text-lg font-semibold text-zinc-100">Bloqueios de horario</h2>
             <p className="mt-1 text-sm text-zinc-400">Crie bloqueios por data com hora inicial e final.</p>
 
@@ -140,7 +140,7 @@ const ScheduleAdminPage = async () => {
             </div>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-zinc-800/70 bg-gradient-to-b from-zinc-900/80 to-zinc-950/75 p-4 shadow-[0_10px_22px_rgba(0,0,0,0.22)] sm:p-5">
+          <div className="mt-4 rounded-2xl border border-zinc-800/70 bg-gradient-to-b from-zinc-900/80 to-zinc-950/75 p-4 shadow-[0_18px_38px_rgba(0,0,0,0.36)] sm:p-5">
             <h2 className="text-lg font-semibold text-zinc-100">Intervalo entre horarios</h2>
             <p className="mt-1 text-sm text-zinc-400">Este intervalo define a geracao automatica dos slots de agendamento.</p>
             <form action={updateSlotInterval} className="mt-4 flex flex-wrap items-end gap-2">
@@ -165,8 +165,8 @@ const ScheduleAdminPage = async () => {
           </div>
         </section>
 
-        <section className="mt-5 rounded-3xl border border-zinc-800/65 bg-zinc-950/45 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.24)] sm:mt-6 sm:p-5">
-          <div className="rounded-2xl border border-zinc-800/70 bg-gradient-to-b from-zinc-900/80 to-zinc-950/75 p-4 shadow-[0_10px_22px_rgba(0,0,0,0.22)] sm:p-5">
+        <section className="mt-5 sm:mt-6">
+          <div className="rounded-2xl border border-zinc-800/70 bg-gradient-to-b from-zinc-900/80 to-zinc-950/75 p-4 shadow-[0_18px_38px_rgba(0,0,0,0.36)] sm:p-5">
             <h2 className="text-lg font-semibold text-zinc-100">Horario de trabalho semanal</h2>
             <p className="mt-1 text-sm text-zinc-400">Adicione um ou mais intervalos por dia.</p>
 
@@ -175,7 +175,7 @@ const ScheduleAdminPage = async () => {
                 const intervals = workingHoursByDay.get(day.value) ?? []
 
                 return (
-                  <article key={day.value} className="rounded-2xl border border-zinc-800/70 bg-zinc-950/55 p-4">
+                  <article key={day.value} className="overflow-hidden rounded-2xl border border-zinc-800/70 bg-zinc-950/55 p-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-base font-semibold text-zinc-100">{day.label}</h3>
                       {intervals.length === 0 ? (
@@ -213,13 +213,31 @@ const ScheduleAdminPage = async () => {
 
                     <form action={addWorkingHour} className="mt-3 grid grid-cols-2 gap-2">
                       <input type="hidden" name="dayOfWeek" value={day.value} />
-                      <label className="text-xs text-zinc-400">
+                      <label className="min-w-0 text-xs text-zinc-400">
                         Inicio
-                        <Input type="time" name="startTime" required className="mt-1 border-zinc-700/80 bg-zinc-900/85 text-zinc-100" />
+                        <Input
+                          type="time"
+                          name="startTime"
+                          required
+                          step={60}
+                          inputMode="numeric"
+                          pattern="^([01]\\d|2[0-3]):[0-5]\\d$"
+                          title="Use o formato HH:MM"
+                          className="mt-1 w-full min-w-0 border-zinc-700/80 bg-zinc-900/85 text-zinc-100 [color-scheme:dark]"
+                        />
                       </label>
-                      <label className="text-xs text-zinc-400">
+                      <label className="min-w-0 text-xs text-zinc-400">
                         Fim
-                        <Input type="time" name="endTime" required className="mt-1 border-zinc-700/80 bg-zinc-900/85 text-zinc-100" />
+                        <Input
+                          type="time"
+                          name="endTime"
+                          required
+                          step={60}
+                          inputMode="numeric"
+                          pattern="^([01]\\d|2[0-3]):[0-5]\\d$"
+                          title="Use o formato HH:MM"
+                          className="mt-1 w-full min-w-0 border-zinc-700/80 bg-zinc-900/85 text-zinc-100 [color-scheme:dark]"
+                        />
                       </label>
                       <Button type="submit" className="col-span-2 rounded-xl border border-violet-500/35 bg-violet-500/15 text-violet-100 hover:bg-violet-500/25">
                         Adicionar intervalo
