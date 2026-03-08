@@ -35,14 +35,14 @@ const ConfirmedBookingPage = async ({ searchParams }: ConfirmedBookingPageProps)
   const customerWhatsappPhone = normalizeWhatsappPhone(booking.customerPhone)
   const managementUrl = `${getAppEnv().NEXT_PUBLIC_APP_URL}/manage?token=${encodeURIComponent(booking.cancellationToken)}`
   const receiptMessage = [
-    "Comprovante de agendamento",
-    `Cliente: ${booking.customerName}`,
-    `Servico: ${booking.service.name}`,
-    `Barbeiro: ${booking.barber?.name ?? "barbeiro"}`,
-    `Data: ${formattedDate}`,
+    "💈 *Comprovante de Agendamento*",
     "",
-    "Cancelar agendamento:",
+    `👤 Cliente: ${booking.customerName}`,
+    `✂️ Serviço: ${booking.service.name}`,
+    `💇 Barbeiro: ${booking.barber?.name ?? "Barbeiro"}`,
+    `📅 Data: ${formattedDate}`,
     "",
+    "🔗 *Gerenciar ou cancelar agendamento:*",
     managementUrl,
   ].join("\n")
   const customerReceiptWhatsappUrl = customerWhatsappPhone
