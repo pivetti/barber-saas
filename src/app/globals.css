@@ -46,14 +46,24 @@
     scroll-behavior: smooth;
     overflow-y: scroll;
     scrollbar-gutter: stable;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   body {
     @apply h-full bg-background text-foreground;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 }
 
 @media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
   input[type="time"]::-webkit-calendar-picker-indicator {
     margin: 0;
   }

@@ -88,15 +88,30 @@ const ScheduleAdminPage = async () => {
             <form action={createBlockedTime} className="mt-4 grid gap-3 md:grid-cols-2">
               <label className="text-sm text-zinc-300">
                 Data
-                <Input type="date" name="date" required className="mt-1 border-zinc-700/80 bg-zinc-900/85 text-zinc-100" />
+                <Input
+                  type="date"
+                  name="date"
+                  required
+                  className="mt-1 block h-14 w-full appearance-none overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 px-4 text-white"
+                />
               </label>
               <label className="text-sm text-zinc-300">
                 Hora inicial
-                <Input type="time" name="startTime" required className="mt-1 border-zinc-700/80 bg-zinc-900/85 text-zinc-100" />
+                <Input
+                  type="time"
+                  name="startTime"
+                  required
+                  className="mt-1 block h-14 w-full appearance-none overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 px-4 text-white"
+                />
               </label>
               <label className="text-sm text-zinc-300">
                 Hora final
-                <Input type="time" name="endTime" required className="mt-1 border-zinc-700/80 bg-zinc-900/85 text-zinc-100" />
+                <Input
+                  type="time"
+                  name="endTime"
+                  required
+                  className="mt-1 block h-14 w-full appearance-none overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 px-4 text-white"
+                />
               </label>
               <label className="text-sm text-zinc-300 md:col-span-2">
                 Motivo (opcional)
@@ -223,7 +238,7 @@ const ScheduleAdminPage = async () => {
                           inputMode="numeric"
                           pattern="^([01]\\d|2[0-3]):[0-5]\\d$"
                           title="Use o formato HH:MM"
-                          className="mt-1 w-full min-w-0 border-zinc-700/80 bg-zinc-900/85 text-zinc-100 [color-scheme:dark]"
+                          className="mt-1 block h-14 w-full min-w-0 appearance-none overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 px-4 text-white [color-scheme:dark]"
                         />
                       </label>
                       <label className="min-w-0 text-xs text-zinc-400">
@@ -236,7 +251,7 @@ const ScheduleAdminPage = async () => {
                           inputMode="numeric"
                           pattern="^([01]\\d|2[0-3]):[0-5]\\d$"
                           title="Use o formato HH:MM"
-                          className="mt-1 w-full min-w-0 border-zinc-700/80 bg-zinc-900/85 text-zinc-100 [color-scheme:dark]"
+                          className="mt-1 block h-14 w-full min-w-0 appearance-none overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 px-4 text-white [color-scheme:dark]"
                         />
                       </label>
                       <Button type="submit" className="col-span-2 rounded-xl border border-violet-500/35 bg-violet-500/15 text-violet-100 hover:bg-violet-500/25">

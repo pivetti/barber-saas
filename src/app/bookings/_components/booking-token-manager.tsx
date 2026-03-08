@@ -288,29 +288,37 @@ const BookingTokenManager = ({ barbers }: BookingTokenManagerProps) => {
             ))}
           </select>
 
-          <Input
-            type="date"
-            value={cancellationForm.date}
-            onChange={(event) =>
-              setCancellationForm((previous) => ({
-                ...previous,
-                date: event.target.value,
-              }))
-            }
-            required
-          />
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-zinc-200">Data do agendamento</label>
+            <Input
+              type="date"
+              value={cancellationForm.date}
+              onChange={(event) =>
+                setCancellationForm((previous) => ({
+                  ...previous,
+                  date: event.target.value,
+                }))
+              }
+              className="block h-14 w-full appearance-none overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 px-4 text-white"
+              required
+            />
+          </div>
 
-          <Input
-            type="time"
-            value={cancellationForm.time}
-            onChange={(event) =>
-              setCancellationForm((previous) => ({
-                ...previous,
-                time: event.target.value,
-              }))
-            }
-            required
-          />
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-zinc-200">Horario do agendamento</label>
+            <Input
+              type="time"
+              value={cancellationForm.time}
+              onChange={(event) =>
+                setCancellationForm((previous) => ({
+                  ...previous,
+                  time: event.target.value,
+                }))
+              }
+              className="block h-14 w-full appearance-none overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 px-4 text-white"
+              required
+            />
+          </div>
 
           <Button type="submit" disabled={isPending} className="md:col-span-2 md:w-fit">
             Solicitar cancelamento
