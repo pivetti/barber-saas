@@ -53,20 +53,23 @@ model Barber {
 }
 
 model Booking {
-  id                    String    @id @default(uuid())
-  customerName          String
-  customerPhone         String
-  cancellationToken     String    @unique
-  cancellationRequested Boolean   @default(false)
+  id                      String   @id @default(uuid())
+  customerName            String
+  customerPhone           String
+  cancellationToken       String   @unique
+  cancellationRequested   Boolean  @default(false)
   cancellationRequestedAt DateTime?
-  status                String    @default("SCHEDULED") // SCHEDULED, DONE, CANCELED
-  serviceId             String
-  barberId              String?
-  barber                Barber?   @relation(fields: [barberId], references: [id])
-  date                  DateTime
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-  service               Service   @relation(fields: [serviceId], references: [id])
+  status                  String   @default("SCHEDULED")
+  serviceId               String
+  barberId                String
+  barber                  Barber   @relation(fields: [barberId], references: [id])
+  date                    DateTime
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  service                 Service  @relation(fields: [serviceId], references: [id])
+
+  @@index([barberId, date])
+  @@index([barberId, status])
 }
 
 model BarberAvailability {
