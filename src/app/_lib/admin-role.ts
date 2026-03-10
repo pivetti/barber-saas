@@ -10,4 +10,7 @@ export const canManageBookings = (role: AppBarberRole) =>
 export const canManageSchedule = (role: AppBarberRole) =>
   role === "OWNER" || role === "ADMIN" || role === "BARBER"
 
-export const mustUseOwnDataScope = (role: AppBarberRole) => role === "BARBER"
+export const mustUseOwnDataScope = (role: AppBarberRole) => {
+  void role
+  return true
+}

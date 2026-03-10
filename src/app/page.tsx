@@ -4,6 +4,7 @@ import { InstagramIcon, MapPinIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import Header from "./_components/header"
+import { toBrasiliaWallClock } from "./_lib/brasilia-time"
 import { db } from "./_lib/prisma"
 
 const BARBER_CONTACTS: Record<string, { whatsapp: string; instagram: string }> = {
@@ -27,6 +28,7 @@ const Home = async () => {
       name: "asc",
     },
   })
+  const now = toBrasiliaWallClock(new Date())
 
   return (
     <div>
@@ -40,11 +42,11 @@ const Home = async () => {
 
           <p className="text-sm text-zinc-400">
             <span className="capitalize">
-              {format(new Date(), "EEEE, dd", { locale: ptBR })}
+              {format(now, "EEEE, dd", { locale: ptBR })}
             </span>
             <span>&nbsp;de&nbsp;</span>
             <span className="capitalize">
-              {format(new Date(), "MMMM", { locale: ptBR })}
+              {format(now, "MMMM", { locale: ptBR })}
             </span>
           </p>
         </section>

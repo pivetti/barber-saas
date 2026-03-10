@@ -1,4 +1,10 @@
-import { endOfDay, format, startOfDay } from "date-fns"
+import { format } from "date-fns"
+import {
+  getBrasiliaDayOfWeek,
+  getBrasiliaEndOfDay,
+  getBrasiliaStartOfDay,
+  toBrasiliaWallClock,
+} from "./brasilia-time"
 import { db } from "./prisma"
 
 interface GetBarberAvailableTimesParams {
@@ -67,9 +73,9 @@ export const getBarberAvailableTimesForDate = async ({
   barberId,
   date,
 }: GetBarberAvailableTimesParams) => {
-  const dayStart = startOfDay(date)
-  const dayEnd = endOfDay(date)
-  const dayOfWeek = date.getDay()
+  const dayStart = getBrasiliaStartOfDay(date)
+  const dayEnd = getBrasiliaEndOfDay(date)
+  const dayOfWeek = getBrasiliaDayOfWeek(date)
 
   const [workingHours, blockedTimes, bookings, settings] = await Promise.all([
     db.workingHour.findMany({
@@ -133,7 +139,7 @@ export const getBarberAvailableTimesForDate = async ({
       endMinutes: timeToMinutes(blockedTime.endTime),
     }))
 
-  const bookedTimes = new Set(bookings.map((booking) => format(booking.date, "HH:mm")))
+  const bookedTimes = new Set(bookings.map((booking) => format(toBrasiliaWallClock(booking.date), "HH:mm")))
 
   return baseSlots.filter((slot) => {
     const slotMinutes = timeToMinutes(slot)

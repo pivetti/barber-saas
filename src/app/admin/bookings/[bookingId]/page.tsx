@@ -6,7 +6,8 @@ import { notFound } from "next/navigation"
 import AdminHeader from "../../_components/admin-header"
 import { cancelAdminBooking, concludeAdminBooking, deleteAdminBooking } from "../../_actions/bookings"
 import { Button } from "@/app/_components/ui/button"
-import { canManageBookings, mustUseOwnDataScope } from "@/app/_lib/admin-permissions"
+import { canManageBookings } from "@/app/_lib/admin-permissions"
+import { toBrasiliaWallClock } from "@/app/_lib/brasilia-time"
 import { db } from "@/app/_lib/prisma"
 import { requireAdmin } from "@/app/_lib/require-admin"
 import { cn } from "@/app/_lib/utils"
@@ -74,7 +75,7 @@ const BookingDetailPage = async ({ params }: BookingDetailPageProps) => {
   const booking = await db.booking.findFirst({
     where: {
       id: params.bookingId,
-      ...(mustUseOwnDataScope(admin.role) ? { barberId: admin.id } : {}),
+      barberId: admin.id,
     },
     include: {
       service: true,
@@ -163,7 +164,7 @@ const BookingDetailPage = async ({ params }: BookingDetailPageProps) => {
                 </div>
 
                 <p className="mt-3 inline-flex h-11 min-w-[94px] items-center justify-center rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 text-2xl font-semibold leading-none text-violet-100 sm:text-3xl">
-                  {format(booking.date, "HH:mm", { locale: ptBR })}
+                  {format(toBrasiliaWallClock(booking.date), "HH:mm", { locale: ptBR })}
                 </p>
               </div>
 
@@ -176,7 +177,7 @@ const BookingDetailPage = async ({ params }: BookingDetailPageProps) => {
                 </div>
 
                 <p className="mt-3 text-base font-semibold text-zinc-100 sm:text-lg">
-                  {format(booking.date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  {format(toBrasiliaWallClock(booking.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                 </p>
               </div>
 

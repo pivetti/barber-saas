@@ -73,14 +73,21 @@ export const cancelAdminBooking = async (formData: FormData) => {
     return
   }
 
-  await db.booking.update({
-    where: { id: parsed.data.bookingId },
+  const result = await db.booking.updateMany({
+    where: {
+      id: parsed.data.bookingId,
+      barberId: admin.id,
+    },
     data: {
       status: "CANCELED",
       cancellationRequested: false,
       cancellationRequestedAt: null,
     },
   })
+
+  if (result.count !== 1) {
+    return
+  }
 
   revalidateAdminBookingPaths(parsed.data.bookingId)
 
@@ -105,14 +112,21 @@ export const concludeAdminBooking = async (formData: FormData) => {
     return
   }
 
-  await db.booking.update({
-    where: { id: parsed.data.bookingId },
+  const result = await db.booking.updateMany({
+    where: {
+      id: parsed.data.bookingId,
+      barberId: admin.id,
+    },
     data: {
       status: "DONE",
       cancellationRequested: false,
       cancellationRequestedAt: null,
     },
   })
+
+  if (result.count !== 1) {
+    return
+  }
 
   revalidateAdminBookingPaths(parsed.data.bookingId)
 
@@ -137,9 +151,16 @@ export const deleteAdminBooking = async (formData: FormData) => {
     return
   }
 
-  await db.booking.delete({
-    where: { id: parsed.data.bookingId },
+  const result = await db.booking.deleteMany({
+    where: {
+      id: parsed.data.bookingId,
+      barberId: admin.id,
+    },
   })
+
+  if (result.count !== 1) {
+    return
+  }
 
   revalidateAdminBookingPaths(parsed.data.bookingId)
 
@@ -198,13 +219,20 @@ export const updateAdminBookingField = async (formData: FormData) => {
       return
     }
 
-    await db.booking.update({
-      where: { id: parsedHeader.data.bookingId },
+    const result = await db.booking.updateMany({
+      where: {
+        id: parsedHeader.data.bookingId,
+        barberId: admin.id,
+      },
       data: {
         customerName: parsedClient.data.customerName,
         customerPhone: parsedClient.data.customerPhone,
       },
     })
+
+    if (result.count !== 1) {
+      return
+    }
   }
 
   if (parsedHeader.data.field === "service") {
@@ -226,12 +254,19 @@ export const updateAdminBookingField = async (formData: FormData) => {
       return
     }
 
-    await db.booking.update({
-      where: { id: parsedHeader.data.bookingId },
+    const result = await db.booking.updateMany({
+      where: {
+        id: parsedHeader.data.bookingId,
+        barberId: admin.id,
+      },
       data: {
         serviceId: service.id,
       },
     })
+
+    if (result.count !== 1) {
+      return
+    }
   }
 
   if (parsedHeader.data.field === "time") {
@@ -244,12 +279,19 @@ export const updateAdminBookingField = async (formData: FormData) => {
     const nextDate = new Date(booking.date)
     nextDate.setHours(hours, minutes, 0, 0)
 
-    await db.booking.update({
-      where: { id: parsedHeader.data.bookingId },
+    const result = await db.booking.updateMany({
+      where: {
+        id: parsedHeader.data.bookingId,
+        barberId: admin.id,
+      },
       data: {
         date: nextDate,
       },
     })
+
+    if (result.count !== 1) {
+      return
+    }
   }
 
   if (parsedHeader.data.field === "date") {
@@ -265,12 +307,19 @@ export const updateAdminBookingField = async (formData: FormData) => {
 
     nextDate.setHours(booking.date.getHours(), booking.date.getMinutes(), 0, 0)
 
-    await db.booking.update({
-      where: { id: parsedHeader.data.bookingId },
+    const result = await db.booking.updateMany({
+      where: {
+        id: parsedHeader.data.bookingId,
+        barberId: admin.id,
+      },
       data: {
         date: nextDate,
       },
     })
+
+    if (result.count !== 1) {
+      return
+    }
   }
 
   revalidateAdminBookingPaths(parsedHeader.data.bookingId)

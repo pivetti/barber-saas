@@ -1,10 +1,17 @@
 "use server"
 
 import { randomBytes } from "crypto"
-import { addWeeks, endOfDay, getDay, isSameDay, startOfDay } from "date-fns"
+import { addWeeks } from "date-fns"
 import { revalidatePath } from "next/cache"
 import { format } from "date-fns"
 import { z } from "zod"
+import {
+  getBrasiliaDayOfWeek,
+  getBrasiliaEndOfDay,
+  getBrasiliaTodayStart,
+  isSameBrasiliaDay,
+  toBrasiliaWallClock,
+} from "../_lib/brasilia-time"
 import { getBarberAvailableTimesForDate } from "../_lib/barber-schedule"
 import { customerNameSchema, idSchema, phoneSchema } from "../_lib/input-validation"
 import { db } from "../_lib/prisma"
@@ -64,12 +71,12 @@ const getBrazilNationalHolidays = (year: number) => {
 }
 
 const isSundayOrBrazilHoliday = (date: Date) => {
-  if (getDay(date) === 0) {
+  if (getBrasiliaDayOfWeek(date) === 0) {
     return true
   }
 
   return getBrazilNationalHolidays(date.getFullYear()).some((holiday) =>
-    isSameDay(holiday, date),
+    isSameBrasiliaDay(holiday, date),
   )
 }
 
@@ -93,8 +100,8 @@ export const createBooking = async (params: CreateBookingParams) => {
 
   const { serviceId, barberId, date, customerName, customerPhone } = parsed.data
 
-  const todayStart = startOfDay(new Date())
-  const maxBookingDate = endOfDay(addWeeks(new Date(), 4))
+  const todayStart = getBrasiliaTodayStart()
+  const maxBookingDate = getBrasiliaEndOfDay(addWeeks(todayStart, 4))
 
   if (date < todayStart) {
     throw new Error("Não e possível agendar em datas passadas")
@@ -132,7 +139,7 @@ export const createBooking = async (params: CreateBookingParams) => {
     date,
   })
 
-  const selectedTime = format(date, "HH:mm")
+  const selectedTime = format(toBrasiliaWallClock(date), "HH:mm")
   if (!availableTimes.includes(selectedTime)) {
     throw new Error("Este horário esta indisponivel. Escolha outro.")
   }

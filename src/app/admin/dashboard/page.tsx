@@ -1,9 +1,17 @@
-import { addDays, endOfDay, format, isSameDay, isToday, parseISO, startOfDay } from "date-fns"
+import { addDays, format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import AdminHeader from "../_components/admin-header"
 import { canManageBookings } from "@/app/_lib/admin-permissions"
+import {
+  createUtcDateFromBrasiliaParts,
+  getBrasiliaEndOfDay,
+  getBrasiliaStartOfDay,
+  getBrasiliaTodayStart,
+  isSameBrasiliaDay,
+  toBrasiliaWallClock,
+} from "@/app/_lib/brasilia-time"
 import { db } from "@/app/_lib/prisma"
 import { requireAdmin } from "@/app/_lib/require-admin"
 import { cn } from "@/app/_lib/utils"
@@ -47,15 +55,15 @@ const getStatusClassName = (status: string, cancellationRequested: boolean) => {
 
 const getSelectedDate = (dateParam?: string) => {
   if (!dateParam) {
-    return startOfDay(new Date())
+    return getBrasiliaTodayStart()
   }
 
-  const parsedDate = parseISO(dateParam)
-  if (Number.isNaN(parsedDate.getTime())) {
-    return startOfDay(new Date())
+  const match = dateParam.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!match) {
+    return getBrasiliaTodayStart()
   }
 
-  return startOfDay(parsedDate)
+  return createUtcDateFromBrasiliaParts(Number(match[1]), Number(match[2]), Number(match[3]))
 }
 
 const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
@@ -68,14 +76,14 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
   const selectedDate = getSelectedDate(searchParams?.date)
   const previousDate = addDays(selectedDate, -1)
   const nextDate = addDays(selectedDate, 1)
-  const today = startOfDay(new Date())
+  const today = getBrasiliaTodayStart()
 
   const bookings = await db.booking.findMany({
     where: {
       barberId: admin.id,
       date: {
-        gte: startOfDay(selectedDate),
-        lte: endOfDay(selectedDate),
+        gte: getBrasiliaStartOfDay(selectedDate),
+        lte: getBrasiliaEndOfDay(selectedDate),
       },
     },
     include: {
@@ -86,9 +94,9 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     },
   })
 
-  const selectedDateLabel = isToday(selectedDate)
-    ? `Hoje - ${format(selectedDate, "dd MMM", { locale: ptBR })}`
-    : format(selectedDate, "dd MMM", { locale: ptBR })
+  const selectedDateLabel = isSameBrasiliaDay(selectedDate, today)
+    ? `Hoje - ${format(toBrasiliaWallClock(selectedDate), "dd MMM", { locale: ptBR })}`
+    : format(toBrasiliaWallClock(selectedDate), "dd MMM", { locale: ptBR })
 
   return (
     <>
@@ -109,7 +117,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
           <div className="mt-5 flex items-center justify-center rounded-2xl border border-zinc-800/60 bg-zinc-950/55 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
             <div className="flex w-full max-w-md items-center justify-center gap-1.5 sm:gap-2">
               <Link
-                href={`/admin/dashboard?date=${format(previousDate, "yyyy-MM-dd")}`}
+                href={`/admin/dashboard?date=${format(toBrasiliaWallClock(previousDate), "yyyy-MM-dd")}`}
                 className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-700/80 bg-zinc-900/85 text-sm font-semibold text-zinc-200 transition-all hover:border-violet-500/40 hover:bg-zinc-800 hover:text-zinc-100 sm:h-10 sm:w-10"
                 aria-label="Dia anterior"
               >
@@ -117,10 +125,10 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
               </Link>
 
               <div className="inline-flex h-9 min-w-[132px] items-center justify-center rounded-xl border border-zinc-700/80 bg-zinc-900/85 px-3 text-sm font-semibold text-zinc-100 sm:h-10 sm:min-w-[152px] sm:px-4">
-                <span className={cn("capitalize", !isToday(selectedDate) && "text-zinc-200")}>{selectedDateLabel}</span>
+                <span className={cn("capitalize", !isSameBrasiliaDay(selectedDate, today) && "text-zinc-200")}>{selectedDateLabel}</span>
               </div>
 
-              {!isSameDay(selectedDate, today) && (
+              {!isSameBrasiliaDay(selectedDate, today) && (
                 <Link
                   href="/admin/dashboard"
                   className="inline-flex h-9 shrink-0 items-center justify-center rounded-xl border border-violet-500/35 bg-violet-500/15 px-3 text-xs font-semibold text-violet-100 transition-all hover:bg-violet-500/25 sm:h-10 sm:px-4 sm:text-sm"
@@ -130,7 +138,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
               )}
 
               <Link
-                href={`/admin/dashboard?date=${format(nextDate, "yyyy-MM-dd")}`}
+                href={`/admin/dashboard?date=${format(toBrasiliaWallClock(nextDate), "yyyy-MM-dd")}`}
                 className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-700/80 bg-zinc-900/85 text-sm font-semibold text-zinc-200 transition-all hover:border-violet-500/40 hover:bg-zinc-800 hover:text-zinc-100 sm:h-10 sm:w-10"
                 aria-label="Proximo dia"
               >
@@ -156,7 +164,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
                   <div className="flex h-full flex-col gap-3.5">
                     <div className="flex items-center justify-between gap-3">
                       <p className="inline-flex h-10 min-w-[76px] shrink-0 items-center justify-center rounded-xl border border-violet-500/30 bg-violet-500/10 px-2 text-lg font-semibold leading-none text-violet-100">
-                        {format(booking.date, "HH:mm")}
+                        {format(toBrasiliaWallClock(booking.date), "HH:mm")}
                       </p>
 
                       <span

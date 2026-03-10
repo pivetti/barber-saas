@@ -155,7 +155,7 @@ async function seedDatabase() {
       }
     }
 
-    console.log("Seed finished")
+    console.log("Seed finished.")
   } catch (error) {
     console.error("Seed error:", error)
     process.exitCode = 1

@@ -8,7 +8,8 @@ import { updateAdminBookingField } from "../../../_actions/bookings"
 import PhoneMaskedInput from "./phone-masked-input"
 import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
-import { canManageBookings, mustUseOwnDataScope } from "@/app/_lib/admin-permissions"
+import { canManageBookings } from "@/app/_lib/admin-permissions"
+import { toBrasiliaWallClock } from "@/app/_lib/brasilia-time"
 import { db } from "@/app/_lib/prisma"
 import { requireAdmin } from "@/app/_lib/require-admin"
 
@@ -62,7 +63,7 @@ const BookingEditPage = async ({ params, searchParams }: BookingEditPageProps) =
     db.booking.findFirst({
       where: {
         id: params.bookingId,
-        ...(mustUseOwnDataScope(admin.role) ? { barberId: admin.id } : {}),
+        barberId: admin.id,
       },
       include: {
         service: true,
@@ -81,8 +82,9 @@ const BookingEditPage = async ({ params, searchParams }: BookingEditPageProps) =
     notFound()
   }
 
-  const defaultDate = format(booking.date, "yyyy-MM-dd")
-  const defaultTime = format(booking.date, "HH:mm")
+  const bookingDateInBrasilia = toBrasiliaWallClock(booking.date)
+  const defaultDate = format(bookingDateInBrasilia, "yyyy-MM-dd")
+  const defaultTime = format(bookingDateInBrasilia, "HH:mm")
 
   return (
     <>
@@ -116,7 +118,7 @@ const BookingEditPage = async ({ params, searchParams }: BookingEditPageProps) =
               <p className="mt-1 text-xs font-medium text-zinc-500">
                 Data atual:{" "}
                 <span className="text-zinc-300">
-                  {format(booking.date, "dd 'de' MMMM 'de' yyyy - HH:mm", { locale: ptBR })}
+                  {format(bookingDateInBrasilia, "dd 'de' MMMM 'de' yyyy - HH:mm", { locale: ptBR })}
                 </span>
               </p>
             </div>

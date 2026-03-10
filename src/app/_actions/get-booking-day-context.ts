@@ -1,7 +1,7 @@
 "use server"
 
-import { endOfDay, startOfDay } from "date-fns"
 import { z } from "zod"
+import { getBrasiliaEndOfDay, getBrasiliaStartOfDay } from "../_lib/brasilia-time"
 import { idSchema } from "../_lib/input-validation"
 import { db } from "../_lib/prisma"
 import { RateLimitExceededError, enforceRateLimit } from "../_lib/rate-limit"
@@ -50,8 +50,8 @@ export const getBookingDayContext = async ({ barberId, date }: GetBookingDayCont
           not: "CANCELED",
         },
         date: {
-          lte: endOfDay(parsed.data.date),
-          gte: startOfDay(parsed.data.date),
+          lte: getBrasiliaEndOfDay(parsed.data.date),
+          gte: getBrasiliaStartOfDay(parsed.data.date),
         },
       },
       select: {

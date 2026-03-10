@@ -3,6 +3,7 @@ import { ptBR } from "date-fns/locale"
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import Header from "@/app/_components/header"
+import { toBrasiliaWallClock } from "@/app/_lib/brasilia-time"
 import { getAppEnv } from "@/app/_lib/env"
 import { getPublicBookingFromSession } from "@/app/_lib/public-booking-session"
 import ConfirmedBookingActions from "./_components/confirmed-booking-actions"
@@ -31,7 +32,7 @@ const ConfirmedBookingPage = async ({ searchParams }: ConfirmedBookingPageProps)
     notFound()
   }
 
-  const formattedDate = format(booking.date, "dd/MM/yyyy 'as' HH:mm", { locale: ptBR })
+  const formattedDate = format(toBrasiliaWallClock(booking.date), "dd/MM/yyyy 'as' HH:mm", { locale: ptBR })
   const customerWhatsappPhone = normalizeWhatsappPhone(booking.customerPhone)
   const managementUrl = `${getAppEnv().NEXT_PUBLIC_APP_URL}/manage?token=${encodeURIComponent(booking.cancellationToken)}`
   const receiptMessage = [

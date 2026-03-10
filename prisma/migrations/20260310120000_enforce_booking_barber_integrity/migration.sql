@@ -1,0 +1,9 @@
+ALTER TABLE "Booking"
+ALTER COLUMN "barberId" SET NOT NULL;
+
+ALTER TABLE "Booking"
+DROP CONSTRAINT IF EXISTS "Booking_barberId_fkey";
+
+ALTER TABLE "Booking"
+ADD CONSTRAINT "Booking_barberId_fkey"
+FOREIGN KEY ("barberId") REFERENCES "Barber"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -62,7 +62,7 @@ model Booking {
   status                  String   @default("SCHEDULED")
   serviceId               String
   barberId                String
-  barber                  Barber   @relation(fields: [barberId], references: [id])
+  barber                  Barber   @relation(fields: [barberId], references: [id], onDelete: Restrict)
   date                    DateTime
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
