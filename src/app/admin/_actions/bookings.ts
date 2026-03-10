@@ -3,8 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { z } from "zod"
-import { canManageBookings, mustUseOwnDataScope } from "@/app/_lib/admin-permissions"
-import { AppBarberRole } from "@/app/_lib/admin-role"
+import { canManageBookings } from "@/app/_lib/admin-permissions"
 import {
   adminReturnToSchema,
   customerNameSchema,
@@ -20,11 +19,11 @@ import { requireAdmin } from "@/app/_lib/require-admin"
 const editableBookingFields = ["client", "service", "time", "date"] as const
 const editableBookingFieldSchema = z.enum(editableBookingFields)
 
-const getBookingByIdForAdmin = async (bookingId: string, adminId: string, adminRole: AppBarberRole) => {
+const getBookingByIdForAdmin = async (bookingId: string, adminId: string) => {
   return db.booking.findFirst({
     where: {
       id: bookingId,
-      ...(mustUseOwnDataScope(adminRole) ? { barberId: adminId } : {}),
+      barberId: adminId,
     },
     select: {
       id: true,
@@ -69,7 +68,7 @@ export const cancelAdminBooking = async (formData: FormData) => {
     return
   }
 
-  const booking = await getBookingByIdForAdmin(parsed.data.bookingId, admin.id, admin.role)
+  const booking = await getBookingByIdForAdmin(parsed.data.bookingId, admin.id)
   if (!booking) {
     return
   }
@@ -101,7 +100,7 @@ export const concludeAdminBooking = async (formData: FormData) => {
     return
   }
 
-  const booking = await getBookingByIdForAdmin(parsed.data.bookingId, admin.id, admin.role)
+  const booking = await getBookingByIdForAdmin(parsed.data.bookingId, admin.id)
   if (!booking) {
     return
   }
@@ -133,7 +132,7 @@ export const deleteAdminBooking = async (formData: FormData) => {
     return
   }
 
-  const booking = await getBookingByIdForAdmin(parsed.data.bookingId, admin.id, admin.role)
+  const booking = await getBookingByIdForAdmin(parsed.data.bookingId, admin.id)
   if (!booking) {
     return
   }
@@ -172,7 +171,7 @@ export const updateAdminBookingField = async (formData: FormData) => {
   const booking = await db.booking.findFirst({
     where: {
       id: parsedHeader.data.bookingId,
-      ...(mustUseOwnDataScope(admin.role) ? { barberId: admin.id } : {}),
+      barberId: admin.id,
     },
     select: {
       id: true,
