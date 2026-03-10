@@ -3,7 +3,7 @@ import { ptBR } from "date-fns/locale"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import AdminHeader from "../_components/admin-header"
-import { canManageBookings, mustUseOwnDataScope } from "@/app/_lib/admin-permissions"
+import { canManageBookings } from "@/app/_lib/admin-permissions"
 import { db } from "@/app/_lib/prisma"
 import { requireAdmin } from "@/app/_lib/require-admin"
 import { cn } from "@/app/_lib/utils"
@@ -60,6 +60,7 @@ const getSelectedDate = (dateParam?: string) => {
 
 const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
   const admin = await requireAdmin()
+
   if (!canManageBookings(admin.role)) {
     redirect("/admin/login")
   }
@@ -71,7 +72,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
 
   const bookings = await db.booking.findMany({
     where: {
-      ...(mustUseOwnDataScope(admin.role) ? { barberId: admin.id } : {}),
+      barberId: admin.id,
       date: {
         gte: startOfDay(selectedDate),
         lte: endOfDay(selectedDate),
