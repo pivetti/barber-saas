@@ -40,7 +40,7 @@ interface PublicBooking {
 
 const getStatusLabel = (status: string) => {
   if (status === "SCHEDULED") return "Agendado"
-  if (status === "DONE") return "Concluido"
+  if (status === "DONE") return "Concluído"
   if (status === "CANCELED") return "Cancelado"
   return status
 }
@@ -128,7 +128,7 @@ const BookingTokenManager = ({ barbers }: BookingTokenManagerProps) => {
                   <DialogHeader>
                     <DialogTitle>Tem certeza que deseja cancelar?</DialogTitle>
                     <DialogDescription className="text-zinc-400">
-                      Esta acao nao pode ser desfeita.
+                      Esta ação nao pode ser desfeita.
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
@@ -157,10 +157,10 @@ const BookingTokenManager = ({ barbers }: BookingTokenManagerProps) => {
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5">
         <h2 className="text-base font-semibold text-zinc-100">Link seguro obrigatorio</h2>
         <p className="mt-1 text-sm text-zinc-400">
-          Para proteger o isolamento dos agendamentos, cancelamentos e solicitacoes so podem ser feitos com o link seguro do comprovante.
+          Para proteger o isolamento dos agendamentos, cancelamentos só podem ser feitos com o link seguro do comprovante.
         </p>
         <p className="mt-4 text-sm text-zinc-300">
-          Se voce perdeu esse link, solicite um novo comprovante diretamente ao barbeiro responsavel.
+          Se voce perdeu esse link, solicite o cancelamento pelo WhatsApp diretamente ao barbeiro responsável.
         </p>
       </section>
     </div>
