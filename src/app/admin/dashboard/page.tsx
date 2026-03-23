@@ -86,8 +86,17 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
         lte: getBrasiliaEndOfDay(selectedDate),
       },
     },
-    include: {
-      service: true,
+    select: {
+      id: true,
+      date: true,
+      status: true,
+      cancellationRequested: true,
+      customerName: true,
+      service: {
+        select: {
+          name: true,
+        },
+      },
     },
     orderBy: {
       date: "asc",
