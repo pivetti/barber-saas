@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { redirect } from "next/navigation"
 import { z } from "zod"
 import { canManageServices } from "@/app/_lib/admin-permissions"
 import {
@@ -152,6 +153,23 @@ export const deleteAdminService = async (formData: FormData) => {
   const parsedServiceId = idSchema.safeParse(String(formData.get("serviceId") ?? ""))
   if (!parsedServiceId.success) {
     return
+  }
+
+  const serviceWithBookings = await db.service.findUnique({
+    where: { id: parsedServiceId.data },
+    select: {
+      id: true,
+      bookings: {
+        select: {
+          id: true,
+        },
+        take: 1,
+      },
+    },
+  })
+
+  if (serviceWithBookings?.bookings.length) {
+    redirect(`/admin/services?deleteErrorServiceId=${encodeURIComponent(parsedServiceId.data)}`)
   }
 
   await db.service.delete({
