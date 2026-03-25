@@ -19,13 +19,13 @@ import {
 
 interface ConfirmedBookingActionsProps {
   canCancel: boolean
-  customerReceiptWhatsappUrl: string
+  barberReceiptWhatsappUrl: string
   canSendReceipt: boolean
 }
 
 const ConfirmedBookingActions = ({
   canCancel,
-  customerReceiptWhatsappUrl,
+  barberReceiptWhatsappUrl,
   canSendReceipt,
 }: ConfirmedBookingActionsProps) => {
   const router = useRouter()
@@ -52,7 +52,7 @@ const ConfirmedBookingActions = ({
     <div className="mt-4 flex flex-col gap-2 sm:flex-row">
       <div className="flex flex-col gap-1.5">
         <Link
-          href={customerReceiptWhatsappUrl}
+          href={barberReceiptWhatsappUrl}
           target="_blank"
           rel="noreferrer"
           aria-disabled={!canSendReceipt}
@@ -65,11 +65,10 @@ const ConfirmedBookingActions = ({
             height={16}
             className="h-4 w-4 object-contain"
           />
-          Receber comprovante
+          Enviar ao barbeiro
         </Link>
         <p className="max-w-sm text-sm text-zinc-400">
-          Clique para receber o comprovante do agendamento no seu WhatsApp e o{" "}
-          <strong>link de cancelamento</strong>.
+          Clique para enviar o comprovante do agendamento para o WhatsApp do barbeiro.
         </p>
       </div>
 

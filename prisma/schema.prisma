@@ -35,7 +35,7 @@ model Barber {
   id              String              @id @default(uuid())
   name            String
   email           String?             @unique
-  phone           String?             @unique
+  phone           String?
   password        String?
   sessionVersion  Int                 @default(0)
   imageUrl        String

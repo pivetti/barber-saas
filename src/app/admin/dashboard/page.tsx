@@ -1,7 +1,9 @@
 import { addDays, format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Ban, CheckCircle2, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react"
 import Link from "next/link"
+import { cancelAdminBooking, concludeAdminBooking, deleteAdminBooking } from "../_actions/bookings"
+import { Button } from "@/app/_components/ui/button"
 import AdminHeader from "../_components/admin-header"
 import { canManageBookings } from "@/app/_lib/admin-permissions"
 import {
@@ -168,46 +170,110 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
               {bookings.map((booking) => (
                 <article
                   key={booking.id}
-                  className="rounded-2xl border border-zinc-800/70 bg-gradient-to-b from-zinc-900/80 to-zinc-950/75 p-3.5 shadow-[0_10px_22px_rgba(0,0,0,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-500/30 hover:shadow-[0_16px_30px_rgba(0,0,0,0.28)]"
+                  className="rounded-2xl border border-zinc-800/70 bg-gradient-to-b from-zinc-900/80 to-zinc-950/75 p-3.5 shadow-[0_10px_22px_rgba(0,0,0,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-500/30 hover:shadow-[0_16px_30px_rgba(0,0,0,0.28)] sm:p-4"
                 >
-                  <div className="flex h-full flex-col gap-3.5">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="inline-flex h-10 min-w-[76px] shrink-0 items-center justify-center rounded-xl border border-violet-500/30 bg-violet-500/10 px-2 text-lg font-semibold leading-none text-violet-100">
+                  <div className="flex h-full flex-col gap-3">
+                    <div className="flex items-start justify-between gap-2.5">
+                      <p className="inline-flex h-9 min-w-[72px] shrink-0 items-center justify-center rounded-xl border border-violet-500/30 bg-violet-500/10 px-2 text-[17px] font-semibold leading-none text-violet-100">
                         {format(toBrasiliaWallClock(booking.date), "HH:mm")}
                       </p>
 
-                      <span
-                        title={getStatusLabel(booking.status, booking.cancellationRequested)}
-                        className={cn(
-                          "inline-flex shrink-0 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]",
-                          "max-w-[150px] items-center justify-center text-center leading-tight",
-                          "shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]",
-                          getStatusClassName(booking.status, booking.cancellationRequested),
-                          booking.cancellationRequested && booking.status === "SCHEDULED"
-                            ? "text-[9px] whitespace-normal"
-                            : "whitespace-nowrap",
-                        )}
-                      >
-                        {getStatusLabel(booking.status, booking.cancellationRequested)}
-                      </span>
+                      <div className="flex min-w-0 flex-col items-end gap-1.5">
+                        <span
+                          title={getStatusLabel(booking.status, booking.cancellationRequested)}
+                          className={cn(
+                            "inline-flex shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]",
+                            "max-w-[150px] items-center justify-center text-center leading-tight",
+                            "shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]",
+                            getStatusClassName(booking.status, booking.cancellationRequested),
+                            booking.cancellationRequested && booking.status === "SCHEDULED"
+                              ? "text-[9px] whitespace-normal"
+                              : "whitespace-nowrap",
+                          )}
+                        >
+                          {getStatusLabel(booking.status, booking.cancellationRequested)}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="flex items-end justify-between gap-3">
+                    <div className="flex min-w-0 items-end justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-base font-semibold tracking-tight text-zinc-100">
+                        <p className="overflow-hidden text-ellipsis whitespace-nowrap text-[17px] font-semibold leading-tight tracking-tight text-zinc-100">
                           {booking.customerName}
                         </p>
-                        <p className="mt-0.5 truncate text-sm font-medium text-zinc-300/95">
+                        <p className="mt-0.5 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-medium leading-tight text-zinc-300/90">
                           {booking.service.name}
                         </p>
                       </div>
 
                       <Link
                         href={`/admin/bookings/${booking.id}`}
-                        className="inline-flex h-9 shrink-0 items-center justify-center rounded-xl border border-violet-500/35 bg-violet-500/12 px-3 text-xs font-semibold text-violet-100 transition-colors hover:bg-violet-500/25"
+                        className="inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-xl border border-violet-500/35 bg-violet-500/12 px-2.5 text-[11px] font-semibold text-violet-100 transition-colors hover:bg-violet-500/25"
                       >
+                        <Pencil className="h-3 w-3 shrink-0" />
                         Editar
                       </Link>
+                    </div>
+
+                    <div className="flex border-t border-zinc-800/70 pt-2.5">
+                      <div className="flex w-full items-center gap-2">
+                        <form action={concludeAdminBooking} className="flex-1">
+                          <input type="hidden" name="bookingId" value={booking.id} />
+                          <input
+                            type="hidden"
+                            name="returnTo"
+                            value={`/admin/dashboard${searchParams?.date ? `?date=${searchParams.date}` : ""}`}
+                          />
+                          <Button
+                            type="submit"
+                            variant="default"
+                            className="h-9 w-full justify-center gap-1.5 rounded-xl px-2 text-[11px] font-semibold sm:h-10 sm:text-xs"
+                            aria-label="Concluir agendamento"
+                            title="Concluir"
+                          >
+                            <CheckCircle2 className="h-4 w-4 shrink-0" />
+                            <span>Concluir</span>
+                          </Button>
+                        </form>
+
+                        <form action={cancelAdminBooking} className="flex-1">
+                          <input type="hidden" name="bookingId" value={booking.id} />
+                          <input
+                            type="hidden"
+                            name="returnTo"
+                            value={`/admin/dashboard${searchParams?.date ? `?date=${searchParams.date}` : ""}`}
+                          />
+                          <Button
+                            type="submit"
+                            variant="outline"
+                            className="h-9 w-full justify-center gap-1.5 rounded-xl border-zinc-700/80 bg-zinc-900/85 px-2 text-[11px] font-semibold text-zinc-100 hover:bg-zinc-800 sm:h-10 sm:text-xs"
+                            aria-label="Cancelar agendamento"
+                            title="Cancelar"
+                          >
+                            <Ban className="h-4 w-4 shrink-0" />
+                            <span>Cancelar</span>
+                          </Button>
+                        </form>
+
+                        <form action={deleteAdminBooking} className="flex-1">
+                          <input type="hidden" name="bookingId" value={booking.id} />
+                          <input
+                            type="hidden"
+                            name="returnTo"
+                            value={`/admin/dashboard${searchParams?.date ? `?date=${searchParams.date}` : ""}`}
+                          />
+                          <Button
+                            type="submit"
+                            variant="destructive"
+                            className="h-9 w-full justify-center gap-1.5 rounded-xl px-2 text-[11px] font-semibold sm:h-10 sm:text-xs"
+                            aria-label="Excluir agendamento"
+                            title="Excluir"
+                          >
+                            <Trash2 className="h-4 w-4 shrink-0" />
+                            <span>Excluir</span>
+                          </Button>
+                        </form>
+                      </div>
                     </div>
                   </div>
                 </article>

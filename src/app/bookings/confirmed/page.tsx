@@ -33,7 +33,7 @@ const ConfirmedBookingPage = async ({ searchParams }: ConfirmedBookingPageProps)
   }
 
   const formattedDate = format(toBrasiliaWallClock(booking.date), "dd/MM/yyyy 'as' HH:mm", { locale: ptBR })
-  const customerWhatsappPhone = normalizeWhatsappPhone(booking.customerPhone)
+  const barberWhatsappPhone = normalizeWhatsappPhone(booking.barber?.phone ?? "")
   const managementUrl = `${getAppEnv().NEXT_PUBLIC_APP_URL}/manage?token=${encodeURIComponent(booking.cancellationToken)}`
   const receiptMessage = [
     "💈 *Comprovante de Agendamento*",
@@ -43,11 +43,11 @@ const ConfirmedBookingPage = async ({ searchParams }: ConfirmedBookingPageProps)
     `💇 Barbeiro: ${booking.barber?.name ?? "Barbeiro"}`,
     `📅 Data: ${formattedDate}`,
     "",
-    "🔗 *Gerenciar ou cancelar agendamento:*",
+    "🔗 *Cancelar agendamento:*",
     managementUrl,
   ].join("\n")
-  const customerReceiptWhatsappUrl = customerWhatsappPhone
-    ? `https://wa.me/${customerWhatsappPhone}?text=${encodeURIComponent(receiptMessage)}`
+  const barberReceiptWhatsappUrl = barberWhatsappPhone
+    ? `https://wa.me/${barberWhatsappPhone}?text=${encodeURIComponent(receiptMessage)}`
     : "#"
 
   return (
@@ -72,8 +72,8 @@ const ConfirmedBookingPage = async ({ searchParams }: ConfirmedBookingPageProps)
 
           <ConfirmedBookingActions
             canCancel={booking.status === "SCHEDULED"}
-            customerReceiptWhatsappUrl={customerReceiptWhatsappUrl}
-            canSendReceipt={Boolean(customerWhatsappPhone)}
+            barberReceiptWhatsappUrl={barberReceiptWhatsappUrl}
+            canSendReceipt={Boolean(barberWhatsappPhone)}
           />
 
           <div className="mt-3">

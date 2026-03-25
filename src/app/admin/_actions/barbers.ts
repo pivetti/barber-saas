@@ -102,7 +102,17 @@ const revalidateBarberPages = () => {
 
 const parseUniqueError = (error: unknown) => {
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-    throw new Error("Email ou telefone já cadastrado")
+    const target = Array.isArray(error.meta?.target) ? error.meta.target.join(",") : String(error.meta?.target ?? "")
+
+    if (target.includes("email")) {
+      throw new Error("Email já cadastrado")
+    }
+
+    if (target.includes("phone")) {
+      throw new Error("Telefone já cadastrado")
+    }
+
+    throw new Error("Já existe um barbeiro com esses dados")
   }
 }
 

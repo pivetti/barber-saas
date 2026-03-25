@@ -32,7 +32,7 @@ const getSeedEnv = (): SeedEnv => {
 async function upsertServices() {
   const servicesData = [
     {
-      name: "Corte",
+      name: "Cabelo",
       description: "Corte classico e moderno com acabamento profissional.",
       price: new Prisma.Decimal(50.0),
       imageUrl: "/services/cabelo.svg",
