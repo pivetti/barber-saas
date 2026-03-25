@@ -22,8 +22,8 @@ const ServicesPage = async ({ searchParams }: ServicesPageProps) => {
       <>
         <Header />
         <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-          <h1 className="text-xl font-bold md:text-2xl">Serviços</h1>
-          <p className="mt-3 text-sm text-zinc-400">Selecione um barbeiro antes de escolher o serviço.</p>
+          <h1 className="text-xl font-bold md:text-2xl">Servicos</h1>
+          <p className="mt-3 text-sm text-zinc-400">Selecione um barbeiro antes de escolher o servico.</p>
           <Link
             href="/barbers"
             className="mt-6 inline-flex h-10 items-center justify-center rounded-xl bg-violet-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-violet-400"
@@ -36,17 +36,38 @@ const ServicesPage = async ({ searchParams }: ServicesPageProps) => {
   }
 
   let selectedBarber: { id: string; name: string } | null = null
+  let services: Array<{
+    id: string
+    name: string
+    description: string
+    imageUrl: string
+    price: { toString: () => string }
+  }> = []
 
   try {
-    selectedBarber = await db.barber.findUnique({
-      where: { id: barberId },
-      select: {
-        id: true,
-        name: true,
-      },
-    })
+    ;[selectedBarber, services] = await Promise.all([
+      db.barber.findUnique({
+        where: { id: barberId },
+        select: {
+          id: true,
+          name: true,
+        },
+      }),
+      db.service.findMany({
+        orderBy: {
+          name: "asc",
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          imageUrl: true,
+          price: true,
+        },
+      }),
+    ])
   } catch (error) {
-    console.error("[services-page] db.barber.findUnique failed", {
+    console.error("[services-page] failed to load barber/services", {
       barberId,
       error,
     })
@@ -57,7 +78,7 @@ const ServicesPage = async ({ searchParams }: ServicesPageProps) => {
       <>
         <Header />
         <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-          <h1 className="text-xl font-bold md:text-2xl">Barbeiro não encontrado</h1>
+          <h1 className="text-xl font-bold md:text-2xl">Barbeiro nao encontrado</h1>
           <Link
             href="/barbers"
             className="mt-6 inline-flex h-10 items-center justify-center rounded-xl bg-violet-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-violet-400"
@@ -67,31 +88,6 @@ const ServicesPage = async ({ searchParams }: ServicesPageProps) => {
         </main>
       </>
     )
-  }
-
-  let services: Array<{
-    id: string
-    name: string
-    description: string
-    imageUrl: string
-    price: { toString: () => string }
-  }> = []
-
-  try {
-    services = await db.service.findMany({
-      orderBy: {
-        name: "asc",
-      },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        imageUrl: true,
-        price: true,
-      },
-    })
-  } catch (error) {
-    console.error("[services-page] db.service.findMany failed", error)
   }
 
   const serializedServices = services.map((service) => ({
@@ -108,12 +104,10 @@ const ServicesPage = async ({ searchParams }: ServicesPageProps) => {
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-1">
-              <h1 className="text-xl font-bold md:text-2xl">Serviços</h1>
+              <h1 className="text-xl font-bold md:text-2xl">Servicos</h1>
               <p className="text-sm text-zinc-400">
                 Barbeiro selecionado:{" "}
-                <span className="font-semibold text-zinc-100">
-                  {selectedBarber.name}
-                </span>
+                <span className="font-semibold text-zinc-100">{selectedBarber.name}</span>
               </p>
             </div>
 
@@ -138,7 +132,7 @@ const ServicesPage = async ({ searchParams }: ServicesPageProps) => {
           </div>
 
           {serializedServices.length === 0 && (
-            <p className="text-sm text-zinc-400">Nenhum serviço encontrado.</p>
+            <p className="text-sm text-zinc-400">Nenhum servico encontrado.</p>
           )}
         </section>
       </main>

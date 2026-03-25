@@ -42,27 +42,27 @@ export const getBookingDayContext = async ({ barberId, date }: GetBookingDayCont
     }
   }
 
-  const [bookings, availableTimes] = await Promise.all([
-    db.booking.findMany({
-      where: {
-        barberId: parsed.data.barberId,
-        status: {
-          not: "CANCELED",
-        },
-        date: {
-          lte: getBrasiliaEndOfDay(parsed.data.date),
-          gte: getBrasiliaStartOfDay(parsed.data.date),
-        },
-      },
-      select: {
-        date: true,
-      },
-    }),
-    getBarberAvailableTimesForDate({
+  const bookings = await db.booking.findMany({
+    where: {
       barberId: parsed.data.barberId,
-      date: parsed.data.date,
-    }),
-  ])
+      status: {
+        not: "CANCELED",
+      },
+      date: {
+        lte: getBrasiliaEndOfDay(parsed.data.date),
+        gte: getBrasiliaStartOfDay(parsed.data.date),
+      },
+    },
+    select: {
+      date: true,
+    },
+  })
+
+  const availableTimes = await getBarberAvailableTimesForDate({
+    barberId: parsed.data.barberId,
+    date: parsed.data.date,
+    existingBookings: bookings,
+  })
 
   return {
     bookings,

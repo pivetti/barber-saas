@@ -10,6 +10,7 @@ import { db } from "./prisma"
 interface GetBarberAvailableTimesParams {
   barberId: string
   date: Date
+  existingBookings?: Array<{ date: Date }>
 }
 
 interface BlockedRangeMinutes {
@@ -72,6 +73,7 @@ const buildSlotsFromWorkingHours = (
 export const getBarberAvailableTimesForDate = async ({
   barberId,
   date,
+  existingBookings,
 }: GetBarberAvailableTimesParams) => {
   const dayStart = getBrasiliaStartOfDay(date)
   const dayEnd = getBrasiliaEndOfDay(date)
@@ -99,21 +101,23 @@ export const getBarberAvailableTimesForDate = async ({
         startTime: "asc",
       },
     }),
-    db.booking.findMany({
-      where: {
-        barberId,
-        status: {
-          not: "CANCELED",
-        },
-        date: {
-          gte: dayStart,
-          lte: dayEnd,
-        },
-      },
-      select: {
-        date: true,
-      },
-    }),
+    existingBookings
+      ? Promise.resolve(existingBookings)
+      : db.booking.findMany({
+          where: {
+            barberId,
+            status: {
+              not: "CANCELED",
+            },
+            date: {
+              gte: dayStart,
+              lte: dayEnd,
+            },
+          },
+          select: {
+            date: true,
+          },
+        }),
     db.scheduleSettings.findUnique({
       where: {
         barberId,
