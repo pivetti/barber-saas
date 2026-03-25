@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { z } from "zod"
 import { canManageServices } from "@/app/_lib/admin-permissions"
+import { getBrasiliaTodayStart } from "@/app/_lib/brasilia-time"
 import {
   idSchema,
   sanitizeText,
@@ -155,7 +156,9 @@ export const deleteAdminService = async (formData: FormData) => {
     return
   }
 
-  const serviceWithBookings = await db.service.findUnique({
+  const todayStart = getBrasiliaTodayStart()
+
+  const serviceWithUpcomingScheduledBookings = await db.service.findUnique({
     where: { id: parsedServiceId.data },
     select: {
       id: true,
@@ -163,17 +166,31 @@ export const deleteAdminService = async (formData: FormData) => {
         select: {
           id: true,
         },
+        where: {
+          status: "SCHEDULED",
+          date: {
+            gte: todayStart,
+          },
+        },
         take: 1,
       },
     },
   })
 
-  if (serviceWithBookings?.bookings.length) {
+  if (serviceWithUpcomingScheduledBookings?.bookings.length) {
     redirect(`/admin/services?deleteErrorServiceId=${encodeURIComponent(parsedServiceId.data)}`)
   }
 
-  await db.service.delete({
-    where: { id: parsedServiceId.data },
+  await db.$transaction(async (tx) => {
+    await tx.booking.deleteMany({
+      where: {
+        serviceId: parsedServiceId.data,
+      },
+    })
+
+    await tx.service.delete({
+      where: { id: parsedServiceId.data },
+    })
   })
 
   revalidatePath("/admin/services")

@@ -4,7 +4,7 @@ import { createAdminService, deleteAdminService, updateAdminService } from "../_
 import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
 import { canManageServices } from "@/app/_lib/admin-permissions"
-import { toBrasiliaWallClock } from "@/app/_lib/brasilia-time"
+import { getBrasiliaTodayStart, toBrasiliaWallClock } from "@/app/_lib/brasilia-time"
 import { db } from "@/app/_lib/prisma"
 import { requireAdmin } from "@/app/_lib/require-admin"
 import { format } from "date-fns"
@@ -30,6 +30,7 @@ const ServicesAdminPage = async ({ searchParams }: ServicesAdminPageProps) => {
   })
 
   const deleteErrorServiceId = searchParams?.deleteErrorServiceId?.trim()
+  const todayStart = getBrasiliaTodayStart()
 
   const blockedService = deleteErrorServiceId
     ? await db.service.findUnique({
@@ -45,19 +46,32 @@ const ServicesAdminPage = async ({ searchParams }: ServicesAdminPageProps) => {
               customerName: true,
               date: true,
             },
+            where: {
+              status: "SCHEDULED",
+              date: {
+                gte: todayStart,
+              },
+            },
             orderBy: {
               date: "asc",
             },
             take: 5,
           },
-          _count: {
-            select: {
-              bookings: true,
-            },
-          },
         },
       })
     : null
+
+  const blockedBookingCount = blockedService
+    ? await db.booking.count({
+        where: {
+          serviceId: blockedService.id,
+          status: "SCHEDULED",
+          date: {
+            gte: todayStart,
+          },
+        },
+      })
+    : 0
 
   return (
     <>
@@ -109,11 +123,11 @@ const ServicesAdminPage = async ({ searchParams }: ServicesAdminPageProps) => {
         </section>
 
         <section className="mt-5 rounded-3xl border border-zinc-800/65 bg-zinc-950/45 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.24)] sm:mt-6 sm:p-5">
-          {blockedService && blockedService._count.bookings > 0 && (
+          {blockedService && blockedBookingCount > 0 && (
             <div className="mb-4 rounded-2xl border border-amber-500/35 bg-amber-500/10 p-4 text-sm text-amber-100">
               <p className="font-semibold">Nao foi possivel excluir o servico {blockedService.name}.</p>
               <p className="mt-1 text-amber-100/80">
-                Exclua primeiro o(s) agendamento(s) vinculados a este servico e tente novamente.
+                Exclua primeiro os agendamentos agendados de hoje ou futuros vinculados a este servico e tente novamente.
               </p>
               <div className="mt-3 space-y-2">
                 {blockedService.bookings.map((booking) => (
@@ -129,9 +143,9 @@ const ServicesAdminPage = async ({ searchParams }: ServicesAdminPageProps) => {
                   </Link>
                 ))}
               </div>
-              {blockedService._count.bookings > blockedService.bookings.length && (
+              {blockedBookingCount > blockedService.bookings.length && (
                 <p className="mt-3 text-xs text-amber-100/75">
-                  Existem mais {blockedService._count.bookings - blockedService.bookings.length} agendamento(s) vinculados.
+                  Existem mais {blockedBookingCount - blockedService.bookings.length} agendamento(s) futuros vinculados.
                 </p>
               )}
             </div>

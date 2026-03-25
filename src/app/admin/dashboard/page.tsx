@@ -166,7 +166,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
               <p className="mt-1 text-xs text-zinc-500">Use os botoes acima para navegar entre os dias.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
               {bookings.map((booking) => (
                 <article
                   key={booking.id}
@@ -216,7 +216,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
                     </div>
 
                     <div className="flex border-t border-zinc-800/70 pt-2.5">
-                      <div className="flex w-full items-center gap-2">
+                      <div className="grid w-full grid-cols-3 gap-1.5">
                         <form action={concludeAdminBooking} className="flex-1">
                           <input type="hidden" name="bookingId" value={booking.id} />
                           <input
@@ -227,7 +227,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
                           <Button
                             type="submit"
                             variant="default"
-                            className="h-9 w-full justify-center gap-1.5 rounded-xl px-2 text-[11px] font-semibold sm:h-10 sm:text-xs"
+                            className="h-9 w-full justify-center gap-1 rounded-xl px-1.5 text-[10px] font-semibold sm:h-10 sm:text-[11px]"
                             aria-label="Concluir agendamento"
                             title="Concluir"
                           >
@@ -246,7 +246,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
                           <Button
                             type="submit"
                             variant="outline"
-                            className="h-9 w-full justify-center gap-1.5 rounded-xl border-zinc-700/80 bg-zinc-900/85 px-2 text-[11px] font-semibold text-zinc-100 hover:bg-zinc-800 sm:h-10 sm:text-xs"
+                            className="h-9 w-full justify-center gap-1 rounded-xl border-zinc-700/80 bg-zinc-900/85 px-1.5 text-[10px] font-semibold text-zinc-100 hover:bg-zinc-800 sm:h-10 sm:text-[11px]"
                             aria-label="Cancelar agendamento"
                             title="Cancelar"
                           >
@@ -265,7 +265,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
                           <Button
                             type="submit"
                             variant="destructive"
-                            className="h-9 w-full justify-center gap-1.5 rounded-xl px-2 text-[11px] font-semibold sm:h-10 sm:text-xs"
+                            className="h-9 w-full justify-center gap-1 rounded-xl px-1.5 text-[10px] font-semibold sm:h-10 sm:text-[11px]"
                             aria-label="Excluir agendamento"
                             title="Excluir"
                           >
