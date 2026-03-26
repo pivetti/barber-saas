@@ -147,6 +147,7 @@ const BarbersAdminPage = async () => {
                         </Button>
                       </form>
                     )}
+
                   </div>
                 </article>
               )

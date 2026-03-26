@@ -10,6 +10,9 @@ const BarbersPage = async () => {
 
   try {
     const result = await db.barber.findMany({
+      where: {
+        isActive: true,
+      },
       orderBy: {
         name: "asc",
       },

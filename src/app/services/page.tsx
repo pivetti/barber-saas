@@ -46,8 +46,11 @@ const ServicesPage = async ({ searchParams }: ServicesPageProps) => {
 
   try {
     ;[selectedBarber, services] = await Promise.all([
-      db.barber.findUnique({
-        where: { id: barberId },
+      db.barber.findFirst({
+        where: {
+          id: barberId,
+          isActive: true,
+        },
         select: {
           id: true,
           name: true,

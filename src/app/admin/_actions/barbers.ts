@@ -7,6 +7,7 @@ import { redirect } from "next/navigation"
 import { z } from "zod"
 import {
   canChangeBarberRole,
+  canDeleteBarber,
   canEditBarber,
   canManageBarbers,
   canToggleBarberStatus,
@@ -96,6 +97,11 @@ const resolveBarberImageUrl = (value?: string) => {
 }
 
 const revalidateBarberPages = () => {
+  revalidatePath("/")
+  revalidatePath("/barbers")
+  revalidatePath("/bookings")
+  revalidatePath("/sobre-nos")
+  revalidatePath("/services")
   revalidatePath("/admin/barbers")
   revalidatePath("/admin/barbers/new")
 }
@@ -307,6 +313,53 @@ export const changeBarberRole = async (formData: FormData) => {
     data: {
       role: nextRole,
     },
+  })
+
+  revalidateBarberPages()
+}
+
+export const deleteBarber = async (formData: FormData) => {
+  const admin = await requireAdmin()
+
+  if (!canManageBarbers(admin.role)) {
+    throw new Error("Not authorized to manage barbers")
+  }
+
+  const parsedBarberId = idSchema.safeParse(String(formData.get("barberId") ?? ""))
+  if (!parsedBarberId.success) {
+    throw new Error("Invalid barber")
+  }
+
+  const barberId = parsedBarberId.data
+
+  const target = await db.barber.findUnique({
+    where: { id: barberId },
+    select: {
+      id: true,
+      role: true,
+    },
+  })
+
+  if (!target) {
+    throw new Error("Barber not found")
+  }
+
+  if (!canDeleteBarber(admin, target.role, target.id)) {
+    throw new Error("Not authorized to delete this barber")
+  }
+
+  const bookingsCount = await db.booking.count({
+    where: {
+      barberId: target.id,
+    },
+  })
+
+  if (bookingsCount > 0) {
+    throw new Error("Nao e possivel excluir um barbeiro com agendamentos vinculados")
+  }
+
+  await db.barber.delete({
+    where: { id: target.id },
   })
 
   revalidateBarberPages()

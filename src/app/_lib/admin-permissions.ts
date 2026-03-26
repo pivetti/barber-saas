@@ -48,6 +48,26 @@ export const canToggleBarberStatus = (
   return false
 }
 
+export const canDeleteBarber = (
+  actor: AdminAuthUser,
+  targetRole: AppBarberRole,
+  targetId: string,
+) => {
+  if (actor.id === targetId) {
+    return false
+  }
+
+  if (actor.role === "OWNER") {
+    return targetRole !== "OWNER"
+  }
+
+  if (actor.role === "ADMIN") {
+    return targetRole === "BARBER"
+  }
+
+  return false
+}
+
 export const canChangeBarberRole = (
   actor: AdminAuthUser,
   targetRole: AppBarberRole,

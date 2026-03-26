@@ -3,7 +3,8 @@
 import Image from "next/image"
 import Link from "next/link"
 import { CalendarDays, Home, LogOut, MenuIcon, Scissors, Users, Wrench } from "lucide-react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useEffect } from "react"
 import AdminLogoutButton from "./admin-logout-button"
 import { cn } from "@/app/_lib/utils"
 import { Button } from "@/app/_components/ui/button"
@@ -27,6 +28,13 @@ interface AdminMobileMenuProps {
 
 const AdminMobileMenu = ({ adminName, links }: AdminMobileMenuProps) => {
   const pathname = usePathname()
+  const router = useRouter()
+
+  useEffect(() => {
+    for (const link of links) {
+      router.prefetch(link.href)
+    }
+  }, [links, router])
 
   const isActiveLink = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
   const getLinkIcon = (href: string) => {

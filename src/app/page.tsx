@@ -24,6 +24,9 @@ const BARBER_CONTACTS: Record<string, { whatsapp: string; instagram: string }> =
 
 const Home = async () => {
   const barbers = await db.barber.findMany({
+    where: {
+      isActive: true,
+    },
     orderBy: {
       name: "asc",
     },

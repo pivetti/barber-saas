@@ -5,6 +5,9 @@ import { db } from "../_lib/prisma"
 
 const SobreNosPage = async () => {
   const barbers = await db.barber.findMany({
+    where: {
+      isActive: true,
+    },
     orderBy: {
       name: "asc",
     },

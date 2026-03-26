@@ -16,6 +16,9 @@ const BookingsPage = async ({ searchParams }: BookingsPageProps) => {
   }
 
   const barbers = await db.barber.findMany({
+    where: {
+      isActive: true,
+    },
     orderBy: {
       name: "asc",
     },

@@ -1,10 +1,10 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import AdminHeader from "../../../_components/admin-header"
-import { updateBarber } from "../../../_actions/barbers"
+import { deleteBarber, updateBarber } from "../../../_actions/barbers"
 import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
-import { canEditBarber, canManageBarbers } from "@/app/_lib/admin-permissions"
+import { canDeleteBarber, canEditBarber, canManageBarbers } from "@/app/_lib/admin-permissions"
 import { db } from "@/app/_lib/prisma"
 import { requireAdmin } from "@/app/_lib/require-admin"
 
@@ -40,6 +40,8 @@ const EditBarberPage = async ({ params }: EditBarberPageProps) => {
   if (!canEditBarber(admin, barber.role)) {
     redirect("/admin/barbers")
   }
+
+  const canDelete = canDeleteBarber(admin, barber.role, barber.id)
 
   return (
     <>
@@ -107,6 +109,27 @@ const EditBarberPage = async ({ params }: EditBarberPageProps) => {
             </div>
           </form>
         </section>
+
+        {canDelete && (
+          <section className="mt-5 rounded-3xl border border-red-500/20 bg-red-500/5 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.24)] sm:mt-6 sm:p-5">
+            <div className="rounded-2xl border border-red-500/20 bg-zinc-950/70 p-4 sm:p-5">
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-red-300/80">Zona de risco</p>
+                <h2 className="text-lg font-semibold text-zinc-50">Excluir barbeiro</h2>
+                <p className="text-sm leading-relaxed text-zinc-400">
+                  Esta acao remove permanentemente o barbeiro. A exclusao sera bloqueada se houver agendamentos vinculados.
+                </p>
+              </div>
+
+              <form action={deleteBarber} className="mt-4">
+                <input type="hidden" name="barberId" value={barber.id} />
+                <Button type="submit" variant="destructive" className="rounded-xl">
+                  Excluir barbeiro
+                </Button>
+              </form>
+            </div>
+          </section>
+        )}
       </main>
     </>
   )
