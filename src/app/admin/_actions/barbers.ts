@@ -363,4 +363,6 @@ export const deleteBarber = async (formData: FormData) => {
   })
 
   revalidateBarberPages()
+  revalidatePath(`/admin/barbers/${target.id}/edit`)
+  redirect("/admin/barbers")
 }

@@ -1,18 +1,16 @@
 "use server"
 
 import { randomBytes } from "crypto"
-import { addWeeks } from "date-fns"
-import { revalidatePath } from "next/cache"
-import { format } from "date-fns"
+import { format, addWeeks } from "date-fns"
 import { z } from "zod"
 import {
   getBrasiliaDayOfWeek,
   getBrasiliaEndOfDay,
+  getBrasiliaStartOfDay,
   getBrasiliaTodayStart,
   isSameBrasiliaDay,
   toBrasiliaWallClock,
 } from "../_lib/brasilia-time"
-import { getBarberAvailableTimesForDate } from "../_lib/barber-schedule"
 import { customerNameSchema, idSchema, phoneSchema } from "../_lib/input-validation"
 import { db } from "../_lib/prisma"
 import { createPublicBookingSession } from "../_lib/public-booking-session"
@@ -26,6 +24,9 @@ interface CreateBookingParams {
   customerName: string
   customerPhone: string
 }
+
+const DEFAULT_SLOT_INTERVAL_MINUTES = 30
+const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/
 
 const getEasterDate = (year: number) => {
   const a = year % 19
@@ -55,18 +56,18 @@ const addDays = (date: Date, days: number) => {
 const getBrazilNationalHolidays = (year: number) => {
   const easter = getEasterDate(year)
   return [
-    new Date(year, 0, 1), // Confraternizacao Universal
-    new Date(year, 3, 21), // Tiradentes
-    new Date(year, 4, 1), // Dia do Trabalhador
-    new Date(year, 8, 7), // Independencia do Brasil
-    new Date(year, 9, 12), // Nossa Senhora Aparecida
-    new Date(year, 10, 2), // Finados
-    new Date(year, 10, 15), // Proclamacao da Republica
-    new Date(year, 11, 25), // Natal
-    addDays(easter, -48), // Carnaval (segunda)
-    addDays(easter, -47), // Carnaval (terca)
-    addDays(easter, -2), // Sexta-feira Santa
-    addDays(easter, 60), // Corpus Christi
+    new Date(year, 0, 1),
+    new Date(year, 3, 21),
+    new Date(year, 4, 1),
+    new Date(year, 8, 7),
+    new Date(year, 9, 12),
+    new Date(year, 10, 2),
+    new Date(year, 10, 15),
+    new Date(year, 11, 25),
+    addDays(easter, -48),
+    addDays(easter, -47),
+    addDays(easter, -2),
+    addDays(easter, 60),
   ]
 }
 
@@ -78,6 +79,19 @@ const isSundayOrBrazilHoliday = (date: Date) => {
   return getBrazilNationalHolidays(date.getFullYear()).some((holiday) =>
     isSameBrasiliaDay(holiday, date),
   )
+}
+
+const timeToMinutes = (time: string) => {
+  const [hours, minutes] = time.split(":").map(Number)
+  return hours * 60 + minutes
+}
+
+const isValidTimeRange = (startTime: string, endTime: string) => {
+  if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
+    return false
+  }
+
+  return timeToMinutes(startTime) < timeToMinutes(endTime)
 }
 
 export const createBooking = async (params: CreateBookingParams) => {
@@ -99,23 +113,29 @@ export const createBooking = async (params: CreateBookingParams) => {
   }
 
   const { serviceId, barberId, date, customerName, customerPhone } = parsed.data
+  const selectedTime = format(toBrasiliaWallClock(date), "HH:mm")
+  const selectedMinutes = timeToMinutes(selectedTime)
 
   const todayStart = getBrasiliaTodayStart()
   const maxBookingDate = getBrasiliaEndOfDay(addWeeks(todayStart, 4))
 
   if (date < todayStart) {
-    throw new Error("Não e possível agendar em datas passadas")
+    throw new Error("Nao e possivel agendar em datas passadas")
   }
 
   if (date > maxBookingDate) {
-    throw new Error("Você so pode agendar ate 4 semanas a partir de hoje")
+    throw new Error("Voce so pode agendar ate 4 semanas a partir de hoje")
   }
 
   if (isSundayOrBrazilHoliday(date)) {
-    throw new Error("Não e possível agendar aos domingos e feriados nacionais")
+    throw new Error("Nao e possivel agendar aos domingos e feriados nacionais")
   }
 
-  const [service, barber] = await Promise.all([
+  const dayStart = getBrasiliaStartOfDay(date)
+  const dayEnd = getBrasiliaEndOfDay(date)
+  const dayOfWeek = getBrasiliaDayOfWeek(date)
+
+  const [service, barber, workingHours, blockedTimes, settings, conflictingBooking] = await Promise.all([
     db.service.findUnique({
       where: { id: serviceId },
       select: { id: true },
@@ -123,6 +143,55 @@ export const createBooking = async (params: CreateBookingParams) => {
     db.barber.findUnique({
       where: { id: barberId },
       select: { id: true, isActive: true },
+    }),
+    db.workingHour.findMany({
+      where: {
+        barberId,
+        dayOfWeek,
+      },
+      orderBy: {
+        startTime: "asc",
+      },
+      select: {
+        startTime: true,
+        endTime: true,
+      },
+    }),
+    db.blockedTime.findMany({
+      where: {
+        barberId,
+        date: {
+          gte: dayStart,
+          lte: dayEnd,
+        },
+      },
+      orderBy: {
+        startTime: "asc",
+      },
+      select: {
+        startTime: true,
+        endTime: true,
+      },
+    }),
+    db.scheduleSettings.findUnique({
+      where: {
+        barberId,
+      },
+      select: {
+        slotIntervalMinutes: true,
+      },
+    }),
+    db.booking.findFirst({
+      where: {
+        barberId,
+        date,
+        status: {
+          not: "CANCELED",
+        },
+      },
+      select: {
+        id: true,
+      },
     }),
   ])
 
@@ -134,28 +203,44 @@ export const createBooking = async (params: CreateBookingParams) => {
     throw new Error("Barbeiro indisponivel")
   }
 
-  const availableTimes = await getBarberAvailableTimesForDate({
-    barberId,
-    date,
+  const slotIntervalMinutes = settings?.slotIntervalMinutes ?? DEFAULT_SLOT_INTERVAL_MINUTES
+
+  const isWithinWorkingHours = workingHours.some((workingHour) => {
+    if (!isValidTimeRange(workingHour.startTime, workingHour.endTime)) {
+      return false
+    }
+
+    const startMinutes = timeToMinutes(workingHour.startTime)
+    const endMinutes = timeToMinutes(workingHour.endTime)
+
+    return (
+      selectedMinutes >= startMinutes &&
+      selectedMinutes + slotIntervalMinutes <= endMinutes &&
+      (selectedMinutes - startMinutes) % slotIntervalMinutes === 0
+    )
   })
 
-  const selectedTime = format(toBrasiliaWallClock(date), "HH:mm")
-  if (!availableTimes.includes(selectedTime)) {
-    throw new Error("Este horário esta indisponivel. Escolha outro.")
+  if (!isWithinWorkingHours) {
+    throw new Error("Este horario esta indisponivel. Escolha outro.")
   }
 
-  const conflictingBooking = await db.booking.findFirst({
-    where: {
-      barberId,
-      date,
-      status: {
-        not: "CANCELED",
-      },
-    },
+  const isBlocked = blockedTimes.some((blockedTime) => {
+    if (!isValidTimeRange(blockedTime.startTime, blockedTime.endTime)) {
+      return false
+    }
+
+    const startMinutes = timeToMinutes(blockedTime.startTime)
+    const endMinutes = timeToMinutes(blockedTime.endTime)
+
+    return selectedMinutes >= startMinutes && selectedMinutes < endMinutes
   })
 
+  if (isBlocked) {
+    throw new Error("Este horario esta indisponivel. Escolha outro.")
+  }
+
   if (conflictingBooking) {
-    throw new Error("Este horário ja esta agendado. Escolha outro.")
+    throw new Error("Este horario ja esta agendado. Escolha outro.")
   }
 
   const booking = await db.booking.create({
@@ -173,11 +258,6 @@ export const createBooking = async (params: CreateBookingParams) => {
   })
 
   await createPublicBookingSession(booking.id)
-
-  revalidatePath("/")
-  revalidatePath("/bookings")
-  revalidatePath("/admin/bookings")
-  revalidatePath("/admin/dashboard")
 
   return booking
 }
