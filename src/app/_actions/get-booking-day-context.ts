@@ -1,9 +1,7 @@
 "use server"
 
 import { z } from "zod"
-import { getBrasiliaEndOfDay, getBrasiliaStartOfDay } from "../_lib/brasilia-time"
 import { idSchema } from "../_lib/input-validation"
-import { db } from "../_lib/prisma"
 import { RateLimitExceededError, enforceRateLimit } from "../_lib/rate-limit"
 import { getRequestIp } from "../_lib/request-ip"
 import { getBarberAvailableTimesForDate } from "../_lib/barber-schedule"
@@ -20,7 +18,6 @@ export const getBookingDayContext = async ({ barberId, date }: GetBookingDayCont
   } catch (error) {
     if (error instanceof RateLimitExceededError) {
       return {
-        bookings: [],
         availableTimes: [],
       }
     }
@@ -37,35 +34,16 @@ export const getBookingDayContext = async ({ barberId, date }: GetBookingDayCont
 
   if (!parsed.success) {
     return {
-      bookings: [],
       availableTimes: [],
     }
   }
 
-  const bookings = await db.booking.findMany({
-    where: {
-      barberId: parsed.data.barberId,
-      status: {
-        not: "CANCELED",
-      },
-      date: {
-        lte: getBrasiliaEndOfDay(parsed.data.date),
-        gte: getBrasiliaStartOfDay(parsed.data.date),
-      },
-    },
-    select: {
-      date: true,
-    },
-  })
-
   const availableTimes = await getBarberAvailableTimesForDate({
     barberId: parsed.data.barberId,
     date: parsed.data.date,
-    existingBookings: bookings,
   })
 
   return {
-    bookings,
     availableTimes,
   }
 }

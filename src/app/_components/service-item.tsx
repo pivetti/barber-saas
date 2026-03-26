@@ -14,7 +14,7 @@ import {
 import { ptBR } from "date-fns/locale"
 import Image from "next/image"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import { toast } from "sonner"
 import { createBooking } from "../_actions/create-booking"
 import { getBookingDayContext } from "../_actions/get-booking-day-context"
@@ -43,7 +43,6 @@ interface ServiceItemProps {
 }
 
 interface GetTimeListProps {
-  bookings: Array<{ date: Date }>
   selectedDay: Date
   availableTimes: string[]
 }
@@ -108,7 +107,7 @@ const isSundayOrBrazilHoliday = (date: Date) => {
   return holidays.some((holiday) => isSameDay(holiday, date))
 }
 
-const getTimeList = ({ bookings, selectedDay, availableTimes }: GetTimeListProps): TimeSlot[] => {
+const getTimeList = ({ selectedDay, availableTimes }: GetTimeListProps): TimeSlot[] => {
   if (isSundayOrBrazilHoliday(selectedDay)) {
     return []
   }
@@ -125,24 +124,12 @@ const getTimeList = ({ bookings, selectedDay, availableTimes }: GetTimeListProps
         milliseconds: 0,
       }),
     )
+
     if (timeIsOnThePast && isToday(selectedDay)) {
       return {
         time,
         available: false,
-        unavailableMessage: "Este horário ja passou.",
-      }
-    }
-
-    const hasBookingOnCurrentTime = bookings.some((booking) => {
-      const bookingDate = new Date(booking.date)
-      return bookingDate.getHours() === hour && bookingDate.getMinutes() === minutes
-    })
-
-    if (hasBookingOnCurrentTime) {
-      return {
-        time,
-        available: false,
-        unavailableMessage: "Este horário ja esta agendado. Escolha outro.",
+        unavailableMessage: "Este horario ja passou.",
       }
     }
 
@@ -161,12 +148,17 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
   const [bookingSheetIsOpen, setBookingSheetIsOpen] = useState(false)
   const [selectedDay, setSelectedDay] = useState<Date | undefined>()
   const [selectedTime, setSelectedTime] = useState<string | undefined>()
-  const [dayBookings, setDayBookings] = useState<Array<{ date: Date }>>([])
   const [availableTimes, setAvailableTimes] = useState<string[]>([])
   const [dayContextStatus, setDayContextStatus] = useState<DayContextStatus>("idle")
   const fetchRequestIdRef = useRef(0)
+  const dayContextCacheRef = useRef<Record<string, string[]>>({})
+  const [isCreatingBooking, startCreateBookingTransition] = useTransition()
   const serviceImageUrl = getServiceImageUrl(service.name, service.imageUrl)
   const maxBookingDate = endOfDay(addWeeks(new Date(), 4))
+
+  useEffect(() => {
+    router.prefetch("/bookings/confirmed")
+  }, [router])
 
   useEffect(() => {
     let isMounted = true
@@ -175,14 +167,21 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
 
     const fetchBookings = async () => {
       if (!selectedDay) {
-        setDayBookings([])
         setAvailableTimes([])
         setDayContextStatus("idle")
         return
       }
 
+      const cacheKey = `${barber.id}:${selectedDay.toISOString().slice(0, 10)}`
+      const cachedAvailableTimes = dayContextCacheRef.current[cacheKey]
+
+      if (cachedAvailableTimes) {
+        setAvailableTimes(cachedAvailableTimes)
+        setDayContextStatus("loaded")
+        return
+      }
+
       setDayContextStatus("loading")
-      setDayBookings([])
       setAvailableTimes([])
 
       try {
@@ -195,7 +194,7 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
           return
         }
 
-        setDayBookings(context.bookings)
+        dayContextCacheRef.current[cacheKey] = context.availableTimes
         setAvailableTimes(context.availableTimes)
         setDayContextStatus("loaded")
       } catch (error) {
@@ -204,7 +203,6 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
         }
 
         console.error("[service-item] failed to load day context", error)
-        setDayBookings([])
         setAvailableTimes([])
         setDayContextStatus("error")
       }
@@ -236,11 +234,10 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
     }
 
     return getTimeList({
-      bookings: dayBookings,
       selectedDay,
       availableTimes,
     })
-  }, [availableTimes, dayBookings, selectedDay])
+  }, [availableTimes, selectedDay])
 
   useEffect(() => {
     if (!selectedTime) {
@@ -283,7 +280,6 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
       setDayContextStatus("loading")
     } else {
       setDayContextStatus("idle")
-      setDayBookings([])
       setAvailableTimes([])
     }
   }
@@ -297,30 +293,32 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
     }
 
     if (!selectedDate) {
-      toast.error("Selecione data e horário")
+      toast.error("Selecione data e horario")
       return
     }
 
-    try {
-      await createBooking({
-        serviceId: service.id,
-        barberId: barber.id,
-        date: selectedDate,
-        customerName: savedProfile.name,
-        customerPhone: savedProfile.phone,
-      })
+    startCreateBookingTransition(async () => {
+      try {
+        await createBooking({
+          serviceId: service.id,
+          barberId: barber.id,
+          date: selectedDate,
+          customerName: savedProfile.name,
+          customerPhone: savedProfile.phone,
+        })
 
-      setBookingSheetIsOpen(false)
-      setSelectedDay(undefined)
-      setSelectedTime(undefined)
-      router.push("/bookings/confirmed")
-    } catch (error) {
-      console.error(error)
+        setBookingSheetIsOpen(false)
+        setSelectedDay(undefined)
+        setSelectedTime(undefined)
+        router.push("/bookings/confirmed")
+      } catch (error) {
+        console.error(error)
 
-      const message =
-        error instanceof Error ? error.message : "Erro ao criar reserva"
-      toast.error(message)
-    }
+        const message =
+          error instanceof Error ? error.message : "Erro ao criar reserva"
+        toast.error(message)
+      }
+    })
   }
 
   return (
@@ -380,7 +378,7 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
           <SheetHeader>
             <SheetTitle>Fazer reserva</SheetTitle>
             <SheetDescription className="sr-only">
-              Escolha data e horário para confirmar sua reserva.
+              Escolha data e horario para confirmar sua reserva.
             </SheetDescription>
           </SheetHeader>
 
@@ -416,7 +414,7 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
                         variant={selectedTime === slot.time ? "default" : "outline"}
                         onClick={() => {
                           if (!slot.available) {
-                            toast.error(slot.unavailableMessage ?? "Horário indisponivel.")
+                            toast.error(slot.unavailableMessage ?? "Horario indisponivel.")
                             return
                           }
 
@@ -434,7 +432,7 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
                   </div>
                 ) : (
                   <div className="mt-5 rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 text-center text-sm text-zinc-400">
-                    Sem horários disponiveis para esta data.
+                    Sem horarios disponiveis para esta data.
                   </div>
                 )}
               </>
@@ -452,8 +450,12 @@ const ServiceItem = ({ service, barber }: ServiceItemProps) => {
           </div>
 
           <SheetFooter>
-            <Button className="h-10 rounded-xl" onClick={handleCreateBooking} disabled={!selectedDate}>
-              Confirmar reserva
+            <Button
+              className="h-10 rounded-xl"
+              onClick={handleCreateBooking}
+              disabled={!selectedDate || isCreatingBooking}
+            >
+              {isCreatingBooking ? "Confirmando..." : "Confirmar reserva"}
             </Button>
           </SheetFooter>
         </SheetContent>
