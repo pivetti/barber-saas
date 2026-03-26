@@ -1,10 +1,9 @@
 import { addDays, format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { Ban, CheckCircle2, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Pencil } from "lucide-react"
 import Link from "next/link"
-import { cancelAdminBooking, concludeAdminBooking, deleteAdminBooking } from "../_actions/bookings"
-import { Button } from "@/app/_components/ui/button"
 import AdminHeader from "../_components/admin-header"
+import BookingCardActions from "./booking-card-actions"
 import { canManageBookings } from "@/app/_lib/admin-permissions"
 import {
   createUtcDateFromBrasiliaParts,
@@ -216,64 +215,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
                     </div>
 
                     <div className="flex border-t border-zinc-800/70 pt-2.5">
-                      <div className="grid w-full grid-cols-3 gap-1.5">
-                        <form action={concludeAdminBooking} className="flex-1">
-                          <input type="hidden" name="bookingId" value={booking.id} />
-                          <input
-                            type="hidden"
-                            name="returnTo"
-                            value={`/admin/dashboard${searchParams?.date ? `?date=${searchParams.date}` : ""}`}
-                          />
-                          <Button
-                            type="submit"
-                            variant="default"
-                            className="h-9 w-full justify-center gap-1 rounded-xl px-1.5 text-[10px] font-semibold sm:h-10 sm:text-[11px]"
-                            aria-label="Concluir agendamento"
-                            title="Concluir"
-                          >
-                            <CheckCircle2 className="h-4 w-4 shrink-0" />
-                            <span>Concluir</span>
-                          </Button>
-                        </form>
-
-                        <form action={cancelAdminBooking} className="flex-1">
-                          <input type="hidden" name="bookingId" value={booking.id} />
-                          <input
-                            type="hidden"
-                            name="returnTo"
-                            value={`/admin/dashboard${searchParams?.date ? `?date=${searchParams.date}` : ""}`}
-                          />
-                          <Button
-                            type="submit"
-                            variant="outline"
-                            className="h-9 w-full justify-center gap-1 rounded-xl border-zinc-700/80 bg-zinc-900/85 px-1.5 text-[10px] font-semibold text-zinc-100 hover:bg-zinc-800 sm:h-10 sm:text-[11px]"
-                            aria-label="Cancelar agendamento"
-                            title="Cancelar"
-                          >
-                            <Ban className="h-4 w-4 shrink-0" />
-                            <span>Cancelar</span>
-                          </Button>
-                        </form>
-
-                        <form action={deleteAdminBooking} className="flex-1">
-                          <input type="hidden" name="bookingId" value={booking.id} />
-                          <input
-                            type="hidden"
-                            name="returnTo"
-                            value={`/admin/dashboard${searchParams?.date ? `?date=${searchParams.date}` : ""}`}
-                          />
-                          <Button
-                            type="submit"
-                            variant="destructive"
-                            className="h-9 w-full justify-center gap-1 rounded-xl px-1.5 text-[10px] font-semibold sm:h-10 sm:text-[11px]"
-                            aria-label="Excluir agendamento"
-                            title="Excluir"
-                          >
-                            <Trash2 className="h-4 w-4 shrink-0" />
-                            <span>Excluir</span>
-                          </Button>
-                        </form>
-                      </div>
+                      <BookingCardActions bookingId={booking.id} />
                     </div>
                   </div>
                 </article>

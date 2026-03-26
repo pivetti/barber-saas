@@ -19,18 +19,6 @@ import { requireAdmin } from "@/app/_lib/require-admin"
 const editableBookingFields = ["client", "service", "time", "date"] as const
 const editableBookingFieldSchema = z.enum(editableBookingFields)
 
-const getBookingByIdForAdmin = async (bookingId: string, adminId: string) => {
-  return db.booking.findFirst({
-    where: {
-      id: bookingId,
-      barberId: adminId,
-    },
-    select: {
-      id: true,
-    },
-  })
-}
-
 const revalidateAdminBookingPaths = (bookingId: string) => {
   revalidatePath("/admin/bookings")
   revalidatePath("/admin/dashboard")
@@ -57,6 +45,43 @@ const parseDateFromInput = (value: string) => {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
+const updateBookingStatusForAdmin = async ({
+  bookingId,
+  adminId,
+  status,
+}: {
+  bookingId: string
+  adminId: string
+  status: "CANCELED" | "DONE"
+}) => {
+  return db.booking.updateMany({
+    where: {
+      id: bookingId,
+      barberId: adminId,
+    },
+    data: {
+      status,
+      cancellationRequested: false,
+      cancellationRequestedAt: null,
+    },
+  })
+}
+
+const deleteBookingForAdmin = async ({
+  bookingId,
+  adminId,
+}: {
+  bookingId: string
+  adminId: string
+}) => {
+  return db.booking.deleteMany({
+    where: {
+      id: bookingId,
+      barberId: adminId,
+    },
+  })
+}
+
 export const cancelAdminBooking = async (formData: FormData) => {
   const admin = await requireAdmin()
   if (!canManageBookings(admin.role)) {
@@ -68,21 +93,10 @@ export const cancelAdminBooking = async (formData: FormData) => {
     return
   }
 
-  const booking = await getBookingByIdForAdmin(parsed.data.bookingId, admin.id)
-  if (!booking) {
-    return
-  }
-
-  const result = await db.booking.updateMany({
-    where: {
-      id: parsed.data.bookingId,
-      barberId: admin.id,
-    },
-    data: {
-      status: "CANCELED",
-      cancellationRequested: false,
-      cancellationRequestedAt: null,
-    },
+  const result = await updateBookingStatusForAdmin({
+    bookingId: parsed.data.bookingId,
+    adminId: admin.id,
+    status: "CANCELED",
   })
 
   if (result.count !== 1) {
@@ -107,21 +121,10 @@ export const concludeAdminBooking = async (formData: FormData) => {
     return
   }
 
-  const booking = await getBookingByIdForAdmin(parsed.data.bookingId, admin.id)
-  if (!booking) {
-    return
-  }
-
-  const result = await db.booking.updateMany({
-    where: {
-      id: parsed.data.bookingId,
-      barberId: admin.id,
-    },
-    data: {
-      status: "DONE",
-      cancellationRequested: false,
-      cancellationRequestedAt: null,
-    },
+  const result = await updateBookingStatusForAdmin({
+    bookingId: parsed.data.bookingId,
+    adminId: admin.id,
+    status: "DONE",
   })
 
   if (result.count !== 1) {
@@ -146,16 +149,9 @@ export const deleteAdminBooking = async (formData: FormData) => {
     return
   }
 
-  const booking = await getBookingByIdForAdmin(parsed.data.bookingId, admin.id)
-  if (!booking) {
-    return
-  }
-
-  const result = await db.booking.deleteMany({
-    where: {
-      id: parsed.data.bookingId,
-      barberId: admin.id,
-    },
+  const result = await deleteBookingForAdmin({
+    bookingId: parsed.data.bookingId,
+    adminId: admin.id,
   })
 
   if (result.count !== 1) {
@@ -167,6 +163,80 @@ export const deleteAdminBooking = async (formData: FormData) => {
   if (parsed.data.returnTo) {
     redirect(parsed.data.returnTo)
   }
+}
+
+export const cancelAdminBookingInline = async (bookingId: string) => {
+  const admin = await requireAdmin()
+  if (!canManageBookings(admin.role)) {
+    throw new Error("Not authorized to manage bookings")
+  }
+
+  const parsedBookingId = idSchema.safeParse(bookingId)
+  if (!parsedBookingId.success) {
+    return { ok: false as const }
+  }
+
+  const result = await updateBookingStatusForAdmin({
+    bookingId: parsedBookingId.data,
+    adminId: admin.id,
+    status: "CANCELED",
+  })
+
+  if (result.count !== 1) {
+    return { ok: false as const }
+  }
+
+  revalidateAdminBookingPaths(parsedBookingId.data)
+  return { ok: true as const }
+}
+
+export const concludeAdminBookingInline = async (bookingId: string) => {
+  const admin = await requireAdmin()
+  if (!canManageBookings(admin.role)) {
+    throw new Error("Not authorized to manage bookings")
+  }
+
+  const parsedBookingId = idSchema.safeParse(bookingId)
+  if (!parsedBookingId.success) {
+    return { ok: false as const }
+  }
+
+  const result = await updateBookingStatusForAdmin({
+    bookingId: parsedBookingId.data,
+    adminId: admin.id,
+    status: "DONE",
+  })
+
+  if (result.count !== 1) {
+    return { ok: false as const }
+  }
+
+  revalidateAdminBookingPaths(parsedBookingId.data)
+  return { ok: true as const }
+}
+
+export const deleteAdminBookingInline = async (bookingId: string) => {
+  const admin = await requireAdmin()
+  if (!canManageBookings(admin.role)) {
+    throw new Error("Not authorized to manage bookings")
+  }
+
+  const parsedBookingId = idSchema.safeParse(bookingId)
+  if (!parsedBookingId.success) {
+    return { ok: false as const }
+  }
+
+  const result = await deleteBookingForAdmin({
+    bookingId: parsedBookingId.data,
+    adminId: admin.id,
+  })
+
+  if (result.count !== 1) {
+    return { ok: false as const }
+  }
+
+  revalidateAdminBookingPaths(parsedBookingId.data)
+  return { ok: true as const }
 }
 
 export const updateAdminBookingField = async (formData: FormData) => {
